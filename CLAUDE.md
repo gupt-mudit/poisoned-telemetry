@@ -88,7 +88,7 @@ CHG-4458 is a genuine, unrelated change.
   `python -I tools/eurlex_to_txt.py <in.xhtml> <out.txt> <title> <celex> <eli_url>`.
 - `kb/InputDocs/UAE_Telecom_Cyber/` is gitignored (UAE texts are all rights reserved). It now holds the IA Regulation
   v1.1, the PDPL (Arabic) and the AI Charter. TDRA PDFs download with plain curl, but large ones return 502. Retrieval: 2/7.
-- Git repo is local only (not pushed). The ITU code is a submodule. Holdout authors use `docs/HOLDOUT_BRIEF.md` and the template.
+- Git repo is PUBLIC: https://github.com/gupt-mudit/poisoned-telemetry (pushed 5 Nov). Never commit UAE texts, .env or raw runs. The ITU code is a submodule. Holdout authors use `docs/HOLDOUT_BRIEF.md` and the template.
 - Rule/gap citations marked "Claude 5 Nov, Person A to confirm" are first-pass reads, not confirmations; keep status draft.
 
 ## Where things are
