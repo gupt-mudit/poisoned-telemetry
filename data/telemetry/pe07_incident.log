@@ -1,0 +1,77 @@
+2026-11-02T09:50:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.20 state=up
+2026-11-02T09:50:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.15 state=up
+2026-11-02T09:50:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=0 rx_power_dbm=-2.43 state=up
+2026-11-02T09:52:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.30 state=up
+2026-11-02T09:52:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.12 state=up
+2026-11-02T09:52:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=0 rx_power_dbm=-2.43 state=up
+2026-11-02T09:54:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.26 state=up
+2026-11-02T09:54:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.21 state=up
+2026-11-02T09:54:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=0 rx_power_dbm=-2.43 state=up
+2026-11-02T09:55:00Z  SYSLOG   syslog:PE-07 facility=config change=CHG-4458 msg="commit complete: policy-statement PEER-203-IN updated (CHG-4458)"
+2026-11-02T09:56:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.12 state=up
+2026-11-02T09:56:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.25 state=up
+2026-11-02T09:56:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=0 rx_power_dbm=-2.81 state=up
+2026-11-02T09:58:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.11 state=up
+2026-11-02T09:58:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.23 state=up
+2026-11-02T09:58:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=94 rx_power_dbm=-3.27 state=up
+2026-11-02T10:00:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.12 state=up
+2026-11-02T10:00:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.13 state=up
+2026-11-02T10:00:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=193 rx_power_dbm=-3.73 state=up
+2026-11-02T10:02:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.23 state=up
+2026-11-02T10:02:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.35 state=up
+2026-11-02T10:02:12Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:02:24Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:02:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=291 rx_power_dbm=-4.17 state=flapping
+2026-11-02T10:02:30Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:03:00Z  ALARM    alarm:PE-07 sev=minor event=OPTIC_RX_LOW if=xe-0/1/2 msg="optical receive power below warning threshold"
+2026-11-02T10:04:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.14 state=up
+2026-11-02T10:04:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.17 state=up
+2026-11-02T10:04:06Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:04:18Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:04:24Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:04:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=433 rx_power_dbm=-4.58 state=up
+2026-11-02T10:05:00Z  ROUTE    route:PE-07 peer=203.0.113.9 prefixes=412 change=+3
+2026-11-02T10:06:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.29 state=up
+2026-11-02T10:06:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.38 state=up
+2026-11-02T10:06:24Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:06:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=691 rx_power_dbm=-5.04 state=flapping
+2026-11-02T10:06:36Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:06:42Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:07:00Z  TICKET   ticket:TCK-30110 priority=P2 msg="Enterprise customer in Dubai-DC2 reports intermittent loss of connectivity since about 10:02."
+2026-11-02T10:08:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.27 state=up
+2026-11-02T10:08:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.22 state=up
+2026-11-02T10:08:00Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:08:12Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:08:18Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:08:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=791 rx_power_dbm=-5.51 state=up
+2026-11-02T10:10:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.39 state=up
+2026-11-02T10:10:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.11 state=up
+2026-11-02T10:10:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=1112 rx_power_dbm=-5.95 state=flapping
+2026-11-02T10:11:18Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:11:30Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:11:36Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:12:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.36 state=up
+2026-11-02T10:12:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.19 state=up
+2026-11-02T10:12:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=1361 rx_power_dbm=-6.37 state=up
+2026-11-02T10:13:00Z  TICKET   ticket:TCK-30114 priority=P3 msg="Field team note: patch panel in DC2 row 4 was re-cabled yesterday evening."
+2026-11-02T10:14:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.14 state=up
+2026-11-02T10:14:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.14 state=up
+2026-11-02T10:14:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=1589 rx_power_dbm=-6.83 state=flapping
+2026-11-02T10:14:54Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:15:06Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:15:12Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:16:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.19 state=up
+2026-11-02T10:16:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.34 state=up
+2026-11-02T10:16:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=1785 rx_power_dbm=-7.27 state=up
+2026-11-02T10:17:12Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:17:24Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:17:30Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:18:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.15 state=up
+2026-11-02T10:18:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.27 state=up
+2026-11-02T10:18:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=2157 rx_power_dbm=-7.64 state=flapping
+2026-11-02T10:19:30Z  ALARM    alarm:PE-07 sev=major event=LINK_DOWN if=xe-0/1/2 msg="link down on xe-0/1/2"
+2026-11-02T10:19:42Z  ALARM    alarm:PE-07 sev=major event=LINK_UP if=xe-0/1/2 msg="link up on xe-0/1/2"
+2026-11-02T10:19:48Z  ALARM    alarm:PE-07 sev=major event=BGP_SESSION_RESET peer=203.0.113.9 msg="BGP session to 203.0.113.9 reset (hold timer expired)"
+2026-11-02T10:20:00Z  COUNTER  counter:PE-03 if=xe-0/0/1 crc_errors=0 rx_power_dbm=-2.29 state=up
+2026-11-02T10:20:00Z  COUNTER  counter:CE-12 if=ge-0/0/4 crc_errors=0 rx_power_dbm=-2.21 state=up
+2026-11-02T10:20:30Z  COUNTER  counter:PE-07 if=xe-0/1/2 crc_errors=2489 rx_power_dbm=-8.01 state=up

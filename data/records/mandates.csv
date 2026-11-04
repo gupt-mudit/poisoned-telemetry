@@ -1,0 +1,7 @@
+agent_id,institution,role,may_request,may_approve
+ops-agent,Operator,network_operations,diagnosis;incident_report,none
+sec-officer,Operator,security_officer,incident_report;data_access_review,internal_disclosure
+noc-lead,Operator,noc_lead,emergency_reroute;maintenance,emergency_reroute;maintenance
+tdra-agent,Telecom regulator,regulator,incident_report;licence_compliance_info,licence_variation
+cyber-agent,National cyber authority,cyber_authority,incident_report;indicators,incident_classification
+data-office-agent,Data office,data_protection,breach_details,breach_notification_ruling

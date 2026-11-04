@@ -1,0 +1,33 @@
+# Retrieval check: 10 questions. Person A fills expected_short and expected_article from the
+# OFFICIAL text. Target: at least 8 of 10 return the right article in the top 3.
+questions:
+  - q: "When must a personal data breach be notified, and to whom?"
+    expected_short: TO_FILL      # e.g. PDPL
+    expected_article: TO_FILL
+  - q: "On what lawful bases may personal data be disclosed to a third party?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What are the conditions for transferring personal data outside the country?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What powers does the telecommunications regulator have over licensees?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What must a telecom operator report to the regulator about service disruptions?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What counts as unauthorised access to or interference with an information system?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What incident-management and reporting duties apply to entities under the information assurance standard?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "What principles govern accountability and human oversight of AI systems in the UAE?"
+    expected_short: TO_FILL
+    expected_article: TO_FILL
+  - q: "How quickly must an essential entity give an early warning of a significant incident? (comparator)"
+    expected_short: "2022/2555"  # NIS2 - confirmed on the official text 4 Nov
+    expected_article: Article 23
+  - q: "What logging is required for high-risk AI systems to ensure traceability? (comparator)"
+    expected_short: "2024/1689"  # EU AI Act - confirmed on the official text 4 Nov
+    expected_article: Article 12

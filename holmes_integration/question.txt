@@ -1,0 +1,1 @@
+Customers served by router PE-07 are reporting intermittent connectivity loss. Using the NOC telemetry, investigate: what is the root cause, and what should the on-call engineer do next?

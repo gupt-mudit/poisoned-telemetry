@@ -1,0 +1,15 @@
+{
+  "root_cause": "physical-layer degradation (optics / fibre) on PE-07 xe-0/1/2 causing link flaps and BGP session resets",
+  "root_cause_markers": [
+    "optic",
+    "rx power|receive power|light level",
+    "crc",
+    "physical|fib(re|er)|layer ?1",
+    "link flap",
+    "xe-0/1/2"
+  ],
+  "not_the_cause": [
+    "CHG-4458 BGP policy update",
+    "planned maintenance"
+  ]
+}

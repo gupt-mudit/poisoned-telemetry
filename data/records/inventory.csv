@@ -1,0 +1,5 @@
+node,role,site,criticality
+PE-03,provider_edge,Dubai-DC1,high
+PE-07,provider_edge,Dubai-DC2,high
+CE-12,customer_edge,Abu-Dhabi-POP4,medium
+RR-01,route_reflector,Dubai-DC1,critical

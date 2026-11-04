@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data/generated/
+results/runs/
+audit/
+.pytest_cache/
+kb/chroma/
+# UAE official texts are "all rights reserved": keep local, never commit
+kb/InputDocs/UAE_Telecom_Cyber/*
+!kb/InputDocs/UAE_Telecom_Cyber/.gitkeep
+poisoned_telemetry.egg-info/
+*.egg-info/
+.DS_Store

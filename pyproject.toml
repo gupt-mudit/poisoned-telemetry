@@ -1,0 +1,28 @@
+[project]
+name = "poisoned-telemetry"
+version = "0.1.0"
+description = "A trust layer for AI agents that read telecom telemetry: quarantine, claim verification, cited policy rules and a hash-chained audit log."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "cryptography>=42",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40", "openai>=1.40"]
+kb = ["chromadb>=0.5", "ollama>=0.3", "pymupdf>=1.24"]
+dev = ["pytest>=8", "hypothesis>=6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["trustlayer*", "agents*", "kb*", "eval*", "scenarios*", "holmes_integration*", "spike*", "tools*"]
+exclude = ["kb.ITUAIReadiness*"]

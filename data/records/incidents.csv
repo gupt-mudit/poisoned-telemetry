@@ -1,0 +1,2 @@
+incident_id,node,opened_utc,severity,status,declared_by
+INC-9012,RR-01,2026-11-02T14:02:00Z,critical,open,noc-lead

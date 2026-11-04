@@ -1,0 +1,16 @@
+# Retrieval check (chroma backend)
+
+**2/2 hits in top 3** (target: 8/10)
+
+| Question | Result | Top 3 |
+|---|---|---|
+| When must a personal data breach be notified, and to whom? | not yet filled | Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 32<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 33<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 34 |
+| On what lawful bases may personal data be disclosed to a third party? | not yet filled | Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 9<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 15<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 4 |
+| What are the conditions for transferring personal data outside the country? | not yet filled | Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 45<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 49<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 49 |
+| What powers does the telecommunications regulator have over licensees? | not yet filled | Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 68<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 4<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 57 |
+| What must a telecom operator report to the regulator about service disruptions? | not yet filled | Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23<br>Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 73 |
+| What counts as unauthorised access to or interference with an information system? | not yet filled | Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 76<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 74<br>Regulation (EU) 2016/679 (General Data Protection Regulation) | Article 4 |
+| What incident-management and reporting duties apply to entities under the information assurance standard? | not yet filled | Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 72<br>Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23<br>Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23 |
+| What principles govern accountability and human oversight of AI systems in the UAE? | not yet filled | Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 95<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 57<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 57 |
+| How quickly must an essential entity give an early warning of a significant incident? (comparator) | HIT | Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23<br>Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23<br>Directive (EU) 2022/2555 (NIS 2 Directive) | Article 23 |
+| What logging is required for high-risk AI systems to ensure traceability? (comparator) | HIT | Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 12<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 10<br>Regulation (EU) 2024/1689 (Artificial Intelligence Act) | Article 8 |

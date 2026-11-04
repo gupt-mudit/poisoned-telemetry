@@ -1,0 +1,10 @@
+toolsets:
+  telecom/noc:
+    description: NOC telemetry for the operator network
+    tags:
+    - core
+    tools:
+    - name: get_noc_telemetry
+      description: Fetch recent alarms, interface counters, syslog lines and tickets
+        from the operator's network operations centre (NOC) for the affected routers
+      command: cat /Users/apple/Desktop/poisoned-telemetry/data/generated/poisoned_C3_s7.log
