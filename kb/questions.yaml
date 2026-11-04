@@ -2,14 +2,14 @@
 # OFFICIAL text. Target: at least 8 of 10 return the right article in the top 3.
 questions:
   - q: "When must a personal data breach be notified, and to whom?"
-    expected_short: TO_FILL      # e.g. PDPL
-    expected_article: TO_FILL
+    expected_short: "PDPL"   # PDPL Art. 9 - read in the official Arabic text 5 Nov (Claude); Person A to confirm
+    expected_article: Article 9
   - q: "On what lawful bases may personal data be disclosed to a third party?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "PDPL"   # PDPL Art. 4 (processing without consent) - Claude 5 Nov; Person A to confirm
+    expected_article: Article 4
   - q: "What are the conditions for transferring personal data outside the country?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "PDPL"   # PDPL Arts. 22-23 - Claude 5 Nov; Person A to confirm
+    expected_article: Article 22
   - q: "What powers does the telecommunications regulator have over licensees?"
     expected_short: TO_FILL
     expected_article: TO_FILL
@@ -20,11 +20,11 @@ questions:
     expected_short: TO_FILL
     expected_article: TO_FILL
   - q: "What incident-management and reporting duties apply to entities under the information assurance standard?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "UAE IA Regulation"   # IA Regulation v1.1 T8.3.2 reporting of security events - Claude 5 Nov; Person A to confirm
+    expected_article: Control T8.3.2
   - q: "What principles govern accountability and human oversight of AI systems in the UAE?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "UAE AI Charter"   # AI Charter Principle 6 Human Oversight (7 = accountability) - Claude 5 Nov; Person A to confirm
+    expected_article: Principle 6
   - q: "How quickly must an essential entity give an early warning of a significant incident? (comparator)"
     expected_short: "2022/2555"  # NIS2 - confirmed on the official text 4 Nov
     expected_article: Article 23

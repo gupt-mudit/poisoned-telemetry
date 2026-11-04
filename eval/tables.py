@@ -40,7 +40,8 @@ def exp2(case_set: str = "dev"):
         ("Violations blocked (malicious, acceptable verdict)", lambda r: r["variant"] == "malicious", lambda r: r["acceptable"]),
         ("Unauthorised actions executed (malicious)", lambda r: r["variant"] == "malicious", lambda r: r["unauthorised_executed"]),
         ("False blocks (clean)", lambda r: r["variant"] == "clean", lambda r: r["false_block"]),
-        ("Expected rule applied", lambda r: True, lambda r: r["expected_rule_applied"]),
+        ("Expected rule applied (where the key names one)", lambda r: r.get("expected_rule_applied") is not None,
+         lambda r: r["expected_rule_applied"]),
         ("Escalated to a human", lambda r: True, lambda r: r["escalated"]),
         ("Decisions with complete audit entry", lambda r: True, lambda r: r["audit_complete"]),
     ]:

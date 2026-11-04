@@ -1,7 +1,21 @@
 # Knowledge-base sources — checklist for Person A
 
 Compiled 4 Nov 2026 from official sites. **Update 4 Nov: NIS2, the EU AI Act and GDPR are now in
-`kb/InputDocs/Comparators/` with manifest entries (from EU CELLAR). No UAE or UK text has been downloaded.** A person must open each official text, check the
+`kb/InputDocs/Comparators/` with manifest entries (from EU CELLAR).**
+**Update 5 Nov: three UAE texts are in the local KB (gitignored):**
+- the TDRA IA Regulation v1.1 (tdra.gov.ae PDF);
+- the PDPL official Arabic text (u.ae PDF);
+- the UAE AI Charter (ai.gov.ae PDF).
+
+**Still missing** (servers returned 502, or the site blocks scripts):
+- the telecom law FDL 3/2003 (TDRA, 502);
+- Licence 2/2026 (TDRA, 502);
+- the English PDPL (uaelegislation.gov.ae, 403);
+- the cybercrime law FDL 34/2021 (uaelegislation.gov.ae);
+- the CSC Incident Response Framework v2.0 (csc.gov.ae refuses the connection).
+
+Open these in a normal browser and save them to `kb/InputDocs/UAE_Telecom_Cyber/`.
+No UK text has been downloaded. A person must open each official text, check the
 provision, then add the file and its manifest entry (`checked_by: <name>`).
 
 Status words: **CONFIRMED** = heading/number read on the official site. **UNCONFIRMED** = seen only in

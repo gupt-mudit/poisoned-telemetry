@@ -41,3 +41,34 @@ documents:
     retrieved_on: 2026-11-04
     retrieved_via: "EU Publications Office CELLAR, CELEX 32016R0679 (OJ XHTML -> text, verbatim, headings marked)"
     checked_by: "Claude (automated; 99 articles detected) - Person A to confirm"
+  # UAE texts below are all rights reserved: the files are kept local (gitignored), only this metadata is committed.
+  - file: UAE_Telecom_Cyber/UAE_PDPL_FDL_45_2021_ar.txt
+    instrument: "Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data (PDPL)"
+    short: "PDPL"
+    jurisdiction: UAE
+    official_url: https://uaelegislation.gov.ae/en/legislations/1972
+    licence: "link only, not redistributed"
+    language: ar
+    retrieved_on: 2026-11-05
+    retrieved_via: "u.ae official PDF (Dubai Judicial Institute edition, 2023), text machine-extracted, article headings marked"
+    checked_by: "Claude (automated; Arts. 4, 5, 7, 8, 9, 20, 22, 23 read in Arabic) - Person A to confirm"
+  - file: UAE_Telecom_Cyber/UAE_IA_Regulation_v1_1_2020.txt
+    instrument: "UAE Information Assurance Regulation, Version 1.1 (March 2020), TDRA"
+    short: "UAE IA Regulation"
+    jurisdiction: UAE
+    official_url: https://tdra.gov.ae/-/media/About/regulations-and-ruling/EN/UAE-Information-Assurance-Regulation-v1-1-pdf.ashx
+    licence: "link only, not redistributed"
+    language: en
+    retrieved_on: 2026-11-05
+    retrieved_via: "TDRA official PDF, text machine-extracted"
+    checked_by: "Claude (automated; controls T3.2.3, T3.6.2, T7.6.1, T8.2.2, T8.2.3, T8.3.2 read) - Person A to confirm; check whether the CSC IA Standard supersedes it"
+  - file: UAE_Telecom_Cyber/UAE_AI_Charter_2024.txt
+    instrument: "The UAE Charter for the Development and Use of Artificial Intelligence (July 2024)"
+    short: "UAE AI Charter"
+    jurisdiction: UAE
+    official_url: https://ai.gov.ae/wp-content/uploads/2024/07/UAEAI-Methaq-EN2-3.pdf
+    licence: "link only, not redistributed"
+    language: en
+    retrieved_on: 2026-11-05
+    retrieved_via: "ai.gov.ae official PDF, text machine-extracted"
+    checked_by: "Claude (automated; 12 principles read) - Person A to confirm"

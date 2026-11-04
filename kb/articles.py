@@ -16,7 +16,8 @@ PATTERNS = [
 # Converted official texts (e.g. EU Official Journal) mark real headings with "§§ ". When a
 # document has markers, ONLY marked headings count, so cross-references ("referred to in
 # Article 5") are not mistaken for the article a passage belongs to.
-MARKED = re.compile(r"§§\s*(Article \d+[A-Za-z]?|Annex [IVXLC]+|Recitals)")
+# Also: IA Regulation controls ("§§ Control T8.3.2") and numbered principles ("§§ Principle 6").
+MARKED = re.compile(r"§§\s*(Article \d+[A-Za-z]?|Annex [IVXLC]+|Recitals|Control [MT]\d+(?:\.\d+)*|Principle \d+)")
 
 
 def headings(text: str, marked_only: bool = False) -> list[tuple[int, str]]:

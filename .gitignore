@@ -13,3 +13,4 @@ kb/InputDocs/UAE_Telecom_Cyber/*
 poisoned_telemetry.egg-info/
 *.egg-info/
 .DS_Store
+results/spotcheck/
