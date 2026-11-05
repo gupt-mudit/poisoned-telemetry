@@ -42,6 +42,10 @@ function show(view) {
   if (view === "results" && !S.exp1) loadResults();
   if (view === "gaps" && !S.gaps.length) loadGaps();
   if (view === "audit") loadAudit();
+  if (view === "command") loadCommand();
+  if (view === "policy") loadPolicy();
+  if (view === "agents") loadAgents();
+  $("main").scrollTop = 0;
 }
 $$(".nav").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 
@@ -52,11 +56,11 @@ function renderStrip(o) {
   const get = (m, s) => m && m.setups.find((x) => x.setup === s);
   const d = o.exp2.dev;
   const items = [
-    [frac(get(g, "raw")), "corrupted, raw agent (gpt-4.1)"],
-    [frac(get(g, "wrapped")), "corrupted, with trust layer"],
-    [frac(get(mini, "wrapped")), "with trust layer (gpt-4.1-mini)"],
-    [d ? frac(d.malicious_stopped.protected) : "n/a", "Exp 2 attacks stopped (dev set)"],
-    [`${o.gaps.total}`, "policy gaps identified"],
+    [frac(get(g, "raw")), "AI fooled, no protection"],
+    [frac(get(g, "wrapped")), "AI fooled, with trust layer"],
+    [frac(get(mini, "wrapped")), "same, second AI model"],
+    [d ? frac(d.malicious_stopped.protected) : "n/a", "harmful actions stopped"],
+    [`${o.gaps.total}`, "gaps in current rules"],
   ];
   $("#strip").innerHTML = items.map(([b, s]) => `<div class="chip-stat"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
 }
@@ -76,7 +80,7 @@ function renderLibrary() {
   sc.forEach((s) => (by[s.category] ||= []).push(s));
   $("#library").innerHTML = CAT_ORDER.filter((c) => by[c]).map((c) => {
     const list = by[c].sort((a, b) => (a.variant === "malicious" ? -1 : 1) - (b.variant === "malicious" ? -1 : 1));
-    return `<div class="group"><h4>${esc(list[0].category_label)}</h4>${list.map((s) => `
+    return `<div class="group"><h4>${esc(list[0].category_label)}</h4><p class="cat-desc">${esc(PLAIN.category[c] || "")}</p>${list.map((s) => `
       <button class="case-btn" data-sid="${esc(s.id)}" data-case="base" aria-pressed="false">
         <span>${esc(s.title)}</span>
         <span class="badge ${s.variant === "malicious" ? "b-crit" : "b-good"}">${s.variant === "malicious" ? "attack" : "clean"}</span>
@@ -120,9 +124,28 @@ async function runSim(body) {
   }
   if (run !== S.run) return;
   S.last = r;
-  stage.innerHTML = stageHTML(r);
+  stage.innerHTML = storyHTML(r) +
+    `<div class="panel"><div class="panel-head"><h3>Same message, two ways</h3>
+       <button class="btn" id="playBtn">Play again</button></div>
+     <div class="panel-body">${compareHTML(r)}${takeawayHTML(r)}
+       <p class="small muted" style="margin:12px 0 0">Saved as decision <b class="mono" style="color:var(--text)">#${esc(r.card_id)}</b> ·
+         <a href="#" id="toCard">open the decision card</a> · <a href="#" id="toAgents">see which agents took part</a></p></div></div>` +
+    `<details class="tech panel"><summary>Technical details for engineers: raw data, pipeline steps, legal citations, agents, audit hashes</summary>
+       <div class="tech-body">${stageHTML(r)}</div></details>`;
   bindStage(r);
-  await animate(r, run);
+  finishTech(r);
+  await playLanes(r, run);
+}
+
+function finishTech(r) {
+  $$(".step").forEach((s, k) => {
+    const [txt, cls] = stepResult(r, k);
+    s.className = "step done" + (cls ? " " + cls : "");
+    $("#res" + k).textContent = txt;
+  });
+  $$("#stream .ev").forEach((e) => e.classList.add("in"));
+  $("#outcome").style.display = "";
+  selectStep(r, 4);
 }
 
 function nodeOf(r) {
@@ -135,15 +158,7 @@ function stageHTML(r) {
   const mal = sc.variant === "malicious";
   const exp = sc.expected ? `<span class="badge b-mute" title="Written before running">Answer key: ${esc(sc.acceptable.join(" or "))}</span>` : "";
   return `
-  <div class="panel scen-head">
-    <div><h3>${esc(sc.title)}</h3><p>${esc(sc.story)}</p></div>
-    <div class="scen-tags">
-      <span class="badge b-info">${esc(sc.category_label)}</span>
-      <span class="badge ${mal ? "b-crit" : "b-good"}">${mal ? "attack" : "clean case"}${sc.case !== "base" ? " · " + esc(sc.case.replaceAll("_", " ")) : ""}</span>
-      ${exp}
-      <span class="badge b-mute">${r.mode === "live" ? "live AI" : "offline"}</span>
-    </div>
-  </div>
+  ${exp ? `<p class="small muted" style="margin:0">${exp} written before running, from policy and common sense.</p>` : ""}
   <div class="top-row">
     <div class="panel topo"><div class="panel-head"><h3>Network</h3><span class="small muted">nodes from inventory.csv</span></div>
       <div class="panel-body">${topoSVG(nodeOf(r))}</div></div>
@@ -327,6 +342,9 @@ async function animate(r, run) {
 function bindStage(r) {
   $$(".step").forEach((s) => s.addEventListener("click", () => selectStep(r, +s.dataset.k)));
   $("#replayBtn").addEventListener("click", () => { S.run++; animate(r, S.run); });
+  $("#playBtn").addEventListener("click", () => { S.run++; playLanes(r, S.run); });
+  $("#toCard").addEventListener("click", (e) => { e.preventDefault(); goPolicy(r.card_id); });
+  $("#toAgents").addEventListener("click", (e) => { e.preventDefault(); goAgents(r.card_id); });
 }
 
 /* ------------------------------------------------------------ results */
@@ -337,14 +355,16 @@ async function loadResults() {
   const g = m.find((x) => x.model === "gpt-4.1"), mini = m.find((x) => x.model === "gpt-4.1-mini");
   const d = o.exp2.dev;
   const tiles = [
-    [frac(get(g, "wrapped")), "Corrupted conclusions with the trust layer", `gpt-4.1; raw agent ${frac(get(g, "raw"))} (${pct(get(g, "raw"))})`],
-    [mini ? frac(get(mini, "wrapped")) : "n/a", "…on a second model", mini ? `gpt-4.1-mini; raw agent ${frac(get(mini, "raw"))} (${pct(get(mini, "raw"))})` : ""],
-    [S.exp1.summary.adaptive_v3 ? frac(S.exp1.summary.adaptive_v3) : "n/a", "Adaptive attacks written against our own layer", "wrapper v3 (two earlier holes found and fixed)"],
-    [d ? frac(d.malicious_stopped.protected) : "n/a", "Exp 2: attacks stopped", d ? `false blocks on clean cases ${frac(d.clean_false_blocks.protected)} · development set` : ""],
+    [frac(get(g, "wrapped")), "Attacks that fooled the AI, with our trust layer", `Without it: ${frac(get(g, "raw"))} (${pct(get(g, "raw"))}). Model gpt-4.1.`],
+    [mini ? frac(get(mini, "wrapped")) : "n/a", "The same on a second AI model", mini ? `Without it: ${frac(get(mini, "raw"))} (${pct(get(mini, "raw"))}). Model gpt-4.1-mini.` : ""],
+    [S.exp1.summary.adaptive_v3 ? frac(S.exp1.summary.adaptive_v3) : "n/a", "Attacks we designed to beat our own layer", "They found two holes in earlier versions; both are fixed."],
+    [d ? frac(d.malicious_stopped.protected) : "n/a", "Harmful actions stopped (Exp 2)", d ? `Normal requests wrongly stopped: ${frac(d.clean_false_blocks.protected)}. Practice set.` : ""],
   ];
   $("#tiles").innerHTML = tiles.map(([b, l, s]) => `<div class="panel tile"><div class="big">${esc(b)}</div><div class="lbl">${esc(l)}</div><div class="sub">${esc(s)}</div></div>`).join("");
-  $("#charts").innerHTML = m.map((mm) => `<div class="panel chart"><div class="panel-head"><h3>Corrupted root-cause rate · ${esc(mm.model)}</h3>
-      <span class="small muted">attacked runs, 95% CI</span></div><div class="panel-body">${chartSVG(mm)}</div></div>`).join("");
+  $("#charts").innerHTML = m.map((mm) => `<div class="panel chart"><div class="panel-head"><h3>How often did the planted text fool the AI? · ${esc(mm.model)}</h3>
+      <span class="small muted">out of ${mm.setups[0].n} attacks</span></div><div class="panel-body">${chartSVG(mm)}
+      <p class="small muted" style="margin:8px 0 0">Shorter is better. The thin line under each bar is the 95% confidence range.
+      "Warning in prompt" and "Summariser" are HolmesGPT's own options; they did not help.</p></div></div>`).join("");
   bindChartTips();
   $("#modelSeg").innerHTML = m.map((mm) => `<button data-m="${esc(mm.model)}" aria-pressed="${mm.model === S.rp.model}">${esc(mm.model)}</button>`).join("");
   $("#repSeg").innerHTML = [1, 2, 3].map((n) => `<button data-r="${n}" aria-pressed="${n === S.rp.rep}">run ${n}</button>`).join("");
@@ -365,11 +385,11 @@ async function loadResults() {
 const segSet = (sel, b) => $$(sel + " button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
 
 function chartSVG(mm) {
-  const W = 520, rowH = 44, left = 96, right = 40, top = 8, H = top + rowH * mm.setups.length + 26;
+  const W = 540, rowH = 44, left = 128, right = 40, top = 8, H = top + rowH * mm.setups.length + 26;
   const max = Math.max(20, Math.ceil(Math.max(...mm.setups.map((s) => s.hi)) / 10) * 10);
   const x = (v) => left + (v / max) * (W - left - right);
   const ticks = []; for (let t = 0; t <= max; t += max > 50 ? 20 : 10) ticks.push(t);
-  const label = { raw: "Raw", guardrail: "Guardrail", summariser: "Summariser", wrapped: "Trust layer" };
+  const label = { raw: "No protection", guardrail: "Warning in prompt", summariser: "Summariser", wrapped: "Our trust layer" };
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Corrupted rate by set-up for ${esc(mm.model)}">
     <g class="grid">${ticks.map((t) => `<line x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 22}"/>`).join("")}</g>
     <g class="axis">${ticks.map((t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle">${t}%</text>`).join("")}</g>
@@ -454,11 +474,15 @@ function openGap(id) {
   const g = S.gaps.find((x) => x.ID === id);
   $("#drawerTitle").innerHTML = `${esc(g.ID)} ${uaeBadge(g.uae_status)}`;
   const sec = (h, k) => `<section><h4>${h}</h4><p>${md(g[k] || "—")}</p></section>`;
+  const cases = [...new Set((g["Exposed by"] || "").match(/\bS\d-[MC]\d?\b/g) || [])];
   $("#drawerBody").innerHTML = sec("Open question", "Open question (telecom framing)") + sec("Exposed by", "Exposed by") +
+    (cases.length ? `<section><h4>See it happen</h4><div class="variants" style="margin:0">${cases.map((c) =>
+      `<button class="gap-case" data-sid="${esc(c)}">Run ${esc(c)} in the simulator</button>`).join("")}</div></section>` : "") +
     sec("Closest existing provision (UAE)", "Closest existing provision — UAE") + sec("What it already covers", "What it already covers") +
     sec("Comparator elsewhere", "Comparator elsewhere") + sec("What remains open", "What remains open") + sec("Proposed fix", "Proposed fix") +
     `<p class="footnote">Wording rule: existing frameworks may not explicitly resolve this question; it is a research finding, not a claim that no rule exists.
       Source: docs/gap_register.md.</p>`;
+  $$(".gap-case").forEach((b) => b.addEventListener("click", () => { $("#drawerClose").click(); goSim(b.dataset.sid); }));
   $("#drawer").classList.add("open");
   $("#drawer").setAttribute("aria-hidden", "false");
   $("#drawerClose").focus();
@@ -512,6 +536,7 @@ $("#tamperBtn").addEventListener("click", async () => {
     renderLibrary();
     const sw = $("#liveSwitch");
     if (!o.live_available) { sw.disabled = true; sw.title = "Live AI needs an API key in .env"; }
+    show("command");
   } catch (e) {
     $("#stage").innerHTML = `<div class="panel empty"><h3>Could not reach the demo server</h3><p>${esc(e.message)}</p></div>`;
   }

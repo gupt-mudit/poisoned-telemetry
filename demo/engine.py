@@ -230,10 +230,21 @@ def simulate(sid: str | None = None, case: str = "base", custom: dict | None = N
             audit.append("live_agents", "ops-agent", {"scenario": sc["id"], "raw_proposal": raw_p,
                                                       "protected_proposal": prot_p,
                                                       "protected_verdict": pd.verdict.value})
+    ak = sc["answer_key"]
+    n_cards = sum(1 for l in DEMO_AUDIT.read_text().splitlines() if '"event":"decision_card"' in l)
+    card_id = f"PT-{n_cards + 1:04d}"
+    audit.append("decision_card", "demo", {
+        "id": card_id, "scenario": sc["id"], "title": sc["title"], "category": sc["category"],
+        "variant": sc["variant"], "case": case, "mode": "live" if live else "offline",
+        "proposal": dec.proposed.model_dump(), "baseline_verdict": base.verdict.value,
+        "verdict": dec.verdict.value, "rule_id": dec.rule_id, "rules_applied": dec.rules_applied,
+        "reasons": dec.reasons, "authority": dec.authority, "requires_human": dec.requires_human,
+        "acceptable": ak.get("acceptable_verdicts", []) if ak.get("expected_verdict") else [],
+        "claims": [{"type": c.type.value, "verification": c.verification.value, "text": c.text,
+                    "evidence": c.evidence, "source": c.source} for c in dec.claims]})
     audit.anchor()
     entries = [json.loads(l) for l in DEMO_AUDIT.read_text().splitlines()[start:]]
 
-    ak = sc["answer_key"]
     return {
         "scenario": {"id": sc["id"], "title": sc["title"], "category": sc["category"],
                      "category_label": CATEGORIES.get(sc["category"], sc["category"]), "variant": sc["variant"],
@@ -259,6 +270,7 @@ def simulate(sid: str | None = None, case: str = "base", custom: dict | None = N
                       "citation": (m.citations[0].model_dump() if m.citations else None),
                       "retrieved": m.body.get("retrieved", [])} for m in ops],
         "live": live_out,
+        "card_id": card_id,
         "audit": [{"n": start + k + 1, "event": e["event"], "actor": e["actor"], "hash": e["hash"],
                    "prev": e["prev"], "source_ref": e.get("source_ref")} for k, e in enumerate(entries)],
         "mode": "live" if live else "offline",
@@ -448,9 +460,162 @@ def tamper_test(log: str = "demo") -> dict:
             "note": "A copy was edited; the real log is unchanged."}
 
 
-def reset_demo_audit() -> None:
-    if DEMO_AUDIT.parent.exists():
-        shutil.rmtree(DEMO_AUDIT.parent)
+def new_session() -> dict:
+    """Start a fresh demo log. The old one is ARCHIVED (renamed), never deleted: it is still an audit record."""
+    d = DEMO_AUDIT.parent
+    if not d.exists():
+        return {"archived": None}
+    from datetime import datetime, timezone
+    dest = d.with_name(f"audit_demo_archive_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}")
+    shutil.move(str(d), str(dest))
+    return {"archived": str(dest.relative_to(ROOT)) if dest.is_relative_to(ROOT) else str(dest)}
+
+
+# ------------------------------------------------------------------ session history (from the demo audit log)
+def _demo_entries() -> list[dict]:
+    if not DEMO_AUDIT.exists():
+        return []
+    return [{"n": k + 1, **json.loads(l)} for k, l in enumerate(DEMO_AUDIT.read_text().splitlines())]
+
+
+def runs(limit: int = 20) -> list[dict]:
+    """Split the demo log into runs: each simulation starts with the quarantine entry the engine writes."""
+    out, cur = [], None
+    for e in _demo_entries():
+        if e["event"] == "quarantine":
+            cur = {"entries": []}
+            out.append(cur)
+        if cur is not None:
+            cur["entries"].append(e)
+    for r in out:
+        card = next((e["payload"] for e in r["entries"] if e["event"] == "decision_card"), None)
+        r["card"] = card
+        r["ts"] = r["entries"][0]["ts"][:19].replace("T", " ")
+    return [r for r in out if r["card"]][::-1][:limit]
+
+
+def decisions(limit: int = 50) -> list[dict]:
+    out = []
+    for r in runs(limit):
+        c = dict(r["card"])
+        c["ts"] = r["ts"]
+        c["citations"] = _citations(c["rules_applied"])
+        c["audit_ref"] = next(e["hash"] for e in r["entries"] if e["event"] == "decision_card")
+        c["decision_hash"] = next((e["hash"] for e in r["entries"]
+                                   if e["event"] == "decision" and e["actor"] == "rule-checker"), None)
+        out.append(c)
+    return out
+
+
+def rule_catalogue() -> list[dict]:
+    used: dict[str, list[str]] = {}
+    for f, _ in _scenario_files():
+        sc = yaml.safe_load(open(f))
+        rid = sc["answer_key"].get("expected_rule")
+        if rid:
+            used.setdefault(rid, []).append(sc["id"])
+    out = []
+    for rid, r in rules_doc().items():
+        s = r.get("source", {})
+        out.append({"id": rid, "applies_to": r.get("applies_to", []), "rule": r.get("rule") or r.get("allow_if", ""),
+                    "otherwise": r.get("otherwise", ""), "escalate_if": r.get("escalate_if", ""),
+                    "instrument": s.get("instrument", ""), "provision": s.get("provision", "TO_VERIFY"),
+                    "checked_by": s.get("checked_by", ""), "status": r.get("status", "draft"),
+                    "scenarios": sorted(used.get(rid, []))})
+    return out
+
+
+ROSTER = [
+    {"id": "scenario-controller", "name": "Scenario controller", "kind": "code",
+     "mandate": "Releases each incoming message only to the agent it is addressed to.",
+     "tools": ["none"], "can_act": False},
+    {"id": "quarantine-reader", "name": "Quarantine reader", "kind": "code",
+     "mandate": "Reads untrusted text in isolation. Withholds free text; passes on neutral, templated claims with their source.",
+     "tools": ["none: no tool access by configuration (an optional sealed model can add a neutral summary)"], "can_act": False},
+    {"id": "ops-agent", "name": "Operations agent", "kind": "AI model",
+     "mandate": "Investigates the incident and proposes ONE next action. Cannot carry anything out itself.",
+     "tools": ["reads monitoring data (raw, or the quarantined view)"], "can_act": False},
+    {"id": "rule-checker", "name": "Rule-checker (policy engine)", "kind": "code",
+     "mandate": "Final say on every proposed action: allow, block, or escalate to a person, using cited rules.",
+     "tools": ["reads the independent records (changes, incidents, mandates, inventory)", "rules.yaml"], "can_act": False},
+    {"id": "tdra-agent", "name": "Telecom regulator agent", "kind": "AI model",
+     "mandate": "Licence conditions, the regulator's powers, service-incident reporting by operators.",
+     "tools": ["search the legal knowledge base"], "can_act": False},
+    {"id": "cyber-agent", "name": "National cyber authority agent", "kind": "AI model",
+     "mandate": "Classification of security incidents, reporting obligations, unauthorised access or interference.",
+     "tools": ["search the legal knowledge base"], "can_act": False},
+    {"id": "data-office-agent", "name": "Data office agent", "kind": "AI model",
+     "mandate": "Disclosure of personal data, lawful basis, transfers, breach notification.",
+     "tools": ["search the legal knowledge base"], "can_act": False},
+    {"id": "audit", "name": "Audit log", "kind": "code",
+     "mandate": "Append-only, hash-chained record of every step. Source text is encrypted and referenced by fingerprint.",
+     "tools": ["none"], "can_act": False},
+]
+
+
+def roster() -> list[dict]:
+    m = {r["agent_id"]: r for r in records().get("mandates", [])}
+    out = []
+    for a in ROSTER:
+        reg = m.get(a["id"])
+        out.append({**a, "registered": bool(reg),
+                    "may_request": (reg or {}).get("may_request", "").split(";") if reg else [],
+                    "may_approve": [x for x in (reg or {}).get("may_approve", "").split(";") if x and x != "none"],
+                    "signature": "not yet (message signing is planned)"})
+    return out
+
+
+# ------------------------------------------------------------------ live command centre
+def _network_state() -> dict:
+    """Node status from the synthetic incident telemetry (data/telemetry) and the records."""
+    log = ROOT / "data" / "telemetry" / "pe07_incident.log"
+    lines = log.read_text().splitlines() if log.exists() else []
+    inv = records().get("inventory", [])
+    nodes = {r["node"]: {"node": r["node"], "role": r["role"], "site": r["site"], "criticality": r["criticality"],
+                         "state": "up", "alarms": 0, "note": ""} for r in inv}
+    for l in lines:
+        m = re.search(r"\b((?:PE|CE|RR)-\d+)\b", l)
+        if not m or m.group(1) not in nodes:
+            continue
+        n = nodes[m.group(1)]
+        if " ALARM " in f" {l} ":
+            n["alarms"] += 1
+        st = re.search(r"state=(\w+)", l)
+        if st and n["state"] != "flapping":
+            n["state"] = st.group(1)
+        rx = re.search(r"rx_power_dbm=(-?[\d.]+)", l)
+        if rx:
+            n["rx"] = float(rx.group(1))
+    for inc in records().get("incidents", []):
+        if inc["node"] in nodes and inc["status"] == "open":
+            nodes[inc["node"]]["note"] = f"{inc['incident_id']} {inc['severity']} incident open"
+    return {"nodes": list(nodes.values()), "log": lines}
+
+
+def command() -> dict:
+    ents = _demo_entries()
+    rs = runs(10_000)
+    cards = [r["card"] for r in rs]
+    claims = [c for card in cards for c in card["claims"]]
+    flags = sum(len(e["payload"].get("flags", [])) for r in rs for e in r["entries"] if e["event"] == "quarantine")
+    v = lambda x: sum(1 for c in cards if c["verdict"] == x)
+    rec = records()
+    return {
+        "network": _network_state(),
+        "session": {"runs": len(cards), "attacks": sum(c["variant"] == "malicious" for c in cards),
+                    "blocked": v("BLOCK"), "escalated": v("ESCALATE"), "allowed": v("ALLOW"),
+                    "attacks_executed_without_layer": sum(c["variant"] == "malicious" and c["baseline_verdict"] == "ALLOW"
+                                                          for c in cards),
+                    "claims": {s: sum(c["verification"] == s for c in claims)
+                               for s in ("verified", "contradicted", "unverified")},
+                    "flags": flags, "audit_entries": len(ents), "live_runs": sum(c["mode"] == "live" for c in cards)},
+        "audit": verify_audit("demo") if ents else {"ok": None, "output": ["no entries yet"]},
+        "recent": decisions(6),
+        "records": {"changes_approved": sum(r["status"] == "approved" for r in rec.get("changes", [])),
+                    "changes_total": len(rec.get("changes", [])),
+                    "incidents_open": [r for r in rec.get("incidents", []) if r["status"] == "open"]},
+        "agents": [{"id": a["id"], "name": a["name"], "kind": a["kind"]} for a in ROSTER],
+    }
 
 
 # ------------------------------------------------------------------ overview strip

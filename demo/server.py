@@ -60,6 +60,26 @@ def simulate(req: SimRequest):
         raise HTTPException(404, "unknown scenario or case")
 
 
+@app.get("/api/command")
+def command():
+    return engine.command()
+
+
+@app.post("/api/session/new")
+def new_session():
+    return engine.new_session()
+
+
+@app.get("/api/decisions")
+def decisions():
+    return {"decisions": engine.decisions(), "rules": engine.rule_catalogue()}
+
+
+@app.get("/api/agents")
+def agents():
+    return {"roster": engine.roster(), "runs": engine.runs(15)}
+
+
 @app.get("/api/exp1")
 def exp1():
     return {"summary": engine.exp1_summary(), "payloads": engine.exp1_payloads()}

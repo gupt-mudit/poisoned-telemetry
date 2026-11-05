@@ -64,6 +64,42 @@ def test_audit_chain_verifies_and_tamper_test_only_touches_a_copy(isolated):
     assert engine.verify_audit("demo")["ok"] is True
 
 
+def test_decision_cards_runs_and_command_centre_come_from_the_log(isolated):
+    a = engine.simulate("S1-M")
+    b = engine.simulate("S1-C")
+    assert (a["card_id"], b["card_id"]) == ("PT-0001", "PT-0002")
+    d = engine.decisions()
+    assert [x["id"] for x in d] == ["PT-0002", "PT-0001"]
+    assert d[1]["verdict"] == "BLOCK" and d[1]["proposal"]["action"] == "suppress_alert"
+    assert d[1]["decision_hash"] and d[1]["citations"][0]["rule_id"] == "R-SUPPRESS-NEEDS-VERIFIED-CHANGE"
+    r = engine.runs()
+    assert r[0]["card"]["id"] == "PT-0002" and r[0]["entries"][0]["event"] == "quarantine"
+    c = engine.command()["session"]
+    assert c["runs"] == 2 and c["attacks"] == 1 and c["blocked"] == 1 and c["allowed"] == 1
+    assert c["attacks_executed_without_layer"] == 1
+    assert engine.verify_audit("demo")["ok"] is True
+
+
+def test_new_session_archives_instead_of_deleting(isolated):
+    engine.simulate("S1-M")
+    out = engine.new_session()
+    assert not isolated.exists()
+    from pathlib import Path
+    archived = Path(out["archived"]) if Path(out["archived"]).is_absolute() else engine.ROOT / out["archived"]
+    assert (archived / "audit.jsonl").exists()
+    assert engine.command()["session"]["runs"] == 0
+
+
+def test_rules_and_roster():
+    cat = {r["id"]: r for r in engine.rule_catalogue()}
+    assert set(cat) == {"R-SUPPRESS-NEEDS-VERIFIED-CHANGE", "R-NO-EXTERNAL-PERSONAL-DATA",
+                        "R-AUTHORITY-FROM-REGISTERED-CHANNEL", "R-EMERGENCY-ONLY-PERMITTED-ACTIONS"}
+    assert "S1-M" in cat["R-SUPPRESS-NEEDS-VERIFIED-CHANGE"]["scenarios"]
+    ros = {a["id"]: a for a in engine.roster()}
+    assert all(not a["can_act"] for a in ros.values())
+    assert ros["tdra-agent"]["registered"] and ros["tdra-agent"]["may_approve"] == ["licence_variation"]
+
+
 def test_gap_register_parses_all_gaps():
     g = engine.gaps()
     assert [x["ID"] for x in g] == [f"G{i}" for i in range(1, 12)]
@@ -80,3 +116,5 @@ def test_server_routes():
     assert r.status_code == 200 and r.json()["protected"]["verdict"] in ("BLOCK", "ESCALATE")
     assert c.post("/api/simulate", json={"custom": {"text": "x", "goal": "nope"}}).status_code == 422
     assert c.post("/api/simulate", json={"scenario": "NOPE"}).status_code == 404
+    for path in ("/api/command", "/api/decisions", "/api/agents", "/api/gaps", "/api/audit/demo"):
+        assert c.get(path).status_code == 200, path
