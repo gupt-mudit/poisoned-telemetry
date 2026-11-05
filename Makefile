@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: install test validate telemetry spike exp1 exp2 exp2-holdout tables key verify-audit kb-setup kb-ingest kb-check
+.PHONY: install test validate telemetry spike exp1 exp2 exp2-holdout tables key verify-audit kb-setup kb-ingest kb-check demo
 
 install:            ## install core + dev + llm + kb deps
 	$(PY) -m pip install -e ".[dev,llm,kb]"
@@ -43,3 +43,6 @@ kb-ingest:          ## ingest kb/InputDocs with the ITU pipeline (needs Ollama +
 
 kb-check:           ## retrieval check (target 8/10 in top 3)
 	$(PY) -m kb.retrieval_check
+
+demo:               ## demo UI at http://127.0.0.1:8765 (offline by default; Live AI switch uses .env)
+	$(PY) -m demo.server

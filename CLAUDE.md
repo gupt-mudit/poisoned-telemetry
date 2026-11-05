@@ -96,7 +96,7 @@ CHG-4458 is a genuine, unrelated change.
 `trustlayer/` core · `agents/institutional.py` · `holmes_integration/` toolsets + question ·
 `eval/` telemetry, injector, runners, judge, tables, spot-check, fallback agent · `scenarios/` dev + holdout ·
 `kb/` ITU wrapper, articles, retriever, manifest, questions · `docs/` gap register (11 gaps), Y.3172 mapping ·
-`tools/first_run.py` one-command setup + spike · `spike/` Step 0.
+`tools/first_run.py` one-command setup + spike · `spike/` Step 0 · `demo/` local demo UI (`make demo`, docs/DEMO.md; offline by default, never shows numbers that are not in results/runs).
 
 ## Immediate next steps
 1. ✅ Done 4 Nov: first run + spike. HolmesGPT stays the Exp 1 subject (subtle payloads F4, C4 corrupt some runs).

@@ -54,6 +54,7 @@ Then fill `.env` (copy `.env.example`; never commit it) and run the HolmesGPT sp
 | Knowledge base | `make kb-setup` · `make kb-ingest` · `make kb-check` | Ollama + `nomic-embed-text`; documents + `kb/manifest.yaml` |
 | Tables | `make tables` | runs |
 | Audit check | `make verify-audit` | Exp 2 run |
+| **Demo UI** (attack simulator, results, gaps, audit) | `make demo` → http://127.0.0.1:8765 | nothing offline; recorded runs for the results screen; API key only for the Live AI switch. See `docs/DEMO.md` |
 
 ## Layout
 ```
@@ -66,6 +67,7 @@ kb/           ITU-pipeline ingestion wrapper, article detection, retriever, mani
 data/         payloads.yaml (24 attacks), records/ (independent ground truth), telemetry/
 docs/         gap_register.md, y3172_mapping.md, SCENARIOS.md
 tools/        verify_audit.py (independent), setup_itu.sh
+demo/         local demo UI: engine.py (calls the real trust layer, reads recorded runs), server.py, static/
 spike/        Step 0 kit
 ```
 
