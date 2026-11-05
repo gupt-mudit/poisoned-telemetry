@@ -7,12 +7,16 @@ Compiled 4 Nov 2026 from official sites. **Update 4 Nov: NIS2, the EU AI Act and
 - the PDPL official Arabic text (u.ae PDF);
 - the UAE AI Charter (ai.gov.ae PDF).
 
-**Still missing** (servers returned 502, or the site blocks scripts):
-- the telecom law FDL 3/2003 (TDRA, 502);
-- Licence 2/2026 (TDRA, 502);
-- the English PDPL (uaelegislation.gov.ae, 403);
-- the cybercrime law FDL 34/2021 (uaelegislation.gov.ae);
-- the CSC Incident Response Framework v2.0 (csc.gov.ae refuses the connection).
+**Update 6 Nov:** the TDRA servers worked on retry, so two more texts are in the local KB:
+- the telecom law FDL 3/2003, consolidated English text, read by OCR because its text is drawn as outlines;
+- Licence No. 2 of 2026, public version, English column only.
+
+Provisions to confirm, with page numbers, are in `docs/CITATION_CHECK.md`.
+
+**Still missing** (the site blocks scripts):
+- the English PDPL (uaelegislation.gov.ae, Cloudflare "you have been blocked");
+- the cybercrime law FDL 34/2021 (same site);
+- the CSC Incident Response Framework v2.0 (csc.gov.ae refuses connections; it may only be reachable from the UAE).
 
 Open these in a normal browser and save them to `kb/InputDocs/UAE_Telecom_Cyber/`.
 No UK text has been downloaded. A person must open each official text, check the

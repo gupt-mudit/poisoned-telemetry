@@ -90,6 +90,7 @@ CHG-4458 is a genuine, unrelated change.
   v1.1, the PDPL (Arabic) and the AI Charter. TDRA PDFs download with plain curl, but large ones return 502. Retrieval: 2/7.
 - Git repo is PUBLIC: https://github.com/gupt-mudit/poisoned-telemetry (pushed 5 Nov). Never commit UAE texts, .env or raw runs. The ITU code is a submodule. Holdout authors use `docs/HOLDOUT_BRIEF.md` and the template.
 - Rule/gap citations marked "Claude 5 Nov, Person A to confirm" are first-pass reads, not confirmations; keep status draft.
+- 6 Nov: telecom law (OCR) + Licence 2/2026 added to the local KB (TDRA 502s were transient). All 4 rules now have provisions (still draft). `docs/CITATION_CHECK.md` = Person A's 27-row check sheet with PDF pages. pdftotext/pdftoppm crash (libhvf); render PDFs with PDFKit via swift, OCR with tesseract.
 
 ## Where things are
 `trustlayer/` core · `agents/institutional.py` · `holmes_integration/` toolsets + question ·

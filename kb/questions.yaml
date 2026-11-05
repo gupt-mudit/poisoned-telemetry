@@ -11,11 +11,11 @@ questions:
     expected_short: "PDPL"   # PDPL Arts. 22-23 - Claude 5 Nov; Person A to confirm
     expected_article: Article 22
   - q: "What powers does the telecommunications regulator have over licensees?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "UAE telecom law"   # FDL 3/2003 Art. 14 (regulations, instructions, requesting information) - Claude 6 Nov; Person A to confirm
+    expected_article: Article 14
   - q: "What must a telecom operator report to the regulator about service disruptions?"
-    expected_short: TO_FILL
-    expected_article: TO_FILL
+    expected_short: "Licence No. 2 of 2026"   # Licence 2/2026 Art. 12.9 (interruption of service) - Claude 6 Nov; Person A to confirm
+    expected_article: Article 12
   - q: "What counts as unauthorised access to or interference with an information system?"
     expected_short: TO_FILL
     expected_article: TO_FILL

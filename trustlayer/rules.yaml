@@ -31,8 +31,9 @@ rules:
     otherwise: BLOCK
     escalate_if: "the claimed authority is a regulator"
     source:
-      instrument: "UAE telecom law (Federal Law by Decree 3/2003, as amended); regulator delegation rules"
-      provision: TO_VERIFY       # telecom law text not yet obtained (TDRA server errors 5 Nov; uaelegislation blocks scripts)
+      instrument: "UAE telecom law (Federal Law by Decree 3/2003, as amended); Licence No. 2 of 2026 (TDRA, public version) as an example of licence conditions; operator channel policy"
+      provision: "Telecom law Art. 12 (TDRA oversees Licensees) and Art. 14 (TDRA issues regulations, instructions and decisions; requests information); Licence 2/2026 Art. 6.2-6.3 (information to TDRA in a format TDRA sets, provided by an authorised employee who confirms accuracy) and Art. 8.3 (a direction to assume control must be received in writing). Neither text says how an instruction is authenticated when it reaches a machine channel: the registered-channel requirement itself is operator policy, not law (see gap G3)"
+      checked_by: "Claude, 6 Nov 2026, against the official texts (KB copies; telecom law is OCR) - Person A to confirm, then set status: verified"
       kb_ref: null
     status: draft
 

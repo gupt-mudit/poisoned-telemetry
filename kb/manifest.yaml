@@ -72,3 +72,23 @@ documents:
     retrieved_on: 2026-11-05
     retrieved_via: "ai.gov.ae official PDF, text machine-extracted"
     checked_by: "Claude (automated; 12 principles read) - Person A to confirm"
+  - file: UAE_Telecom_Cyber/UAE_Telecom_Law_FDL_3_2003_consolidated_en.txt
+    instrument: "UAE telecom law: Federal Law by Decree No. 3 of 2003 on the Regulation of the Telecommunications Sector, as amended (TDRA consolidated English text, 2022)"
+    short: "UAE telecom law"
+    jurisdiction: UAE
+    official_url: https://tdra.gov.ae/-/media/About/Legal-References/LAW/LAW-English/Final-TDRA-telecom-law_Final_english_o-02-07-2022--W-OUT-Bleed.ashx
+    licence: "link only, not redistributed"
+    language: en
+    retrieved_on: 2026-11-06
+    retrieved_via: "TDRA official PDF (body text is drawn as outlines), OCR with tesseract 5.5.1, article headings marked"
+    checked_by: "Claude (automated OCR; Arts. 12, 13, 14, 40, 41, 79 repeated read) - Person A to confirm against the PDF"
+  - file: UAE_Telecom_Cyber/UAE_Licence_2_2026_public_en.txt
+    instrument: "UAE Licence No. 2 of 2026 (TDRA public licence, Emirates Telecommunications Group), public version"
+    short: "Licence No. 2 of 2026"
+    jurisdiction: UAE
+    official_url: https://tdra.gov.ae/-/media/About/LICENSING/EN/Licence-22026-Etisalat-Public.ashx
+    licence: "link only, not redistributed"
+    language: en
+    retrieved_on: 2026-11-06
+    retrieved_via: "TDRA official bilingual PDF, English column kept, text machine-extracted"
+    checked_by: "Claude (automated; Arts. 6.1-6.4, 8.1-8.3, 9.2.1, 12.4, 12.7, 12.9 read) - Person A to confirm. One licensee's licence: an example of UAE licence conditions"
