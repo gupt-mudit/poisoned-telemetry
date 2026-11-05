@@ -39,7 +39,7 @@ It never prints your key, and writes `results/FIRST_RUN_REPORT.md` (no secrets) 
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
 make install          # core + dev + llm + kb extras
-make test             # 74 tests, offline — never calls a paid API
+make test             # 128 tests, offline — never calls a paid API
 make validate         # policy scenarios vs answer keys -> ALL CONSISTENT
 make exp2 && make tables
 ```

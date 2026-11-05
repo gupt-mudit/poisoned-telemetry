@@ -98,14 +98,64 @@ CHG-4458 is a genuine, unrelated change.
 `kb/` ITU wrapper, articles, retriever, manifest, questions · `docs/` gap register (11 gaps), Y.3172 mapping ·
 `tools/first_run.py` one-command setup + spike · `spike/` Step 0 · `demo/` local demo UI (`make demo`, docs/DEMO.md; 7 screens; offline by default; shows only recorded or session-logged data).
 
-## Immediate next steps
-1. ✅ Done 4 Nov: first run + spike. HolmesGPT stays the Exp 1 subject (subtle payloads F4, C4 corrupt some runs).
-2. ✅ Done 4 Nov: Exp 1 complete, 300/300 runs → `results/exp1_table.md`. Person D: spot-check 20 judged answers.
-3. Person A: open the sources in `docs/KB_SOURCES.md`, check provisions, add files + `kb/manifest.yaml` →
-   `make kb-ingest kb-check`; fill `kb/questions.yaml`; replace TO_VERIFY in rules, scenarios, gap register.
-4. Write blind holdout scenarios (~20 malicious, ~16 clean) — NOT Claude, NOT Person C. Then `make exp2-holdout`.
-5. Rerun `make exp2 && make tables` once the KB exists (citations); spot-check 20 judged answers (`python -m eval.spotcheck`).
-6. 2–3 minute demo video (raw vs wrapped on I4 fake runbook or E4 — 3/3 corrupted raw, 0/3 wrapped; C3 did not fool gpt-4.1; cyber authority citing a real article; audit trail), tag v2, submit.
+## HANDOVER (6 Nov 2026): start here
+The work moves to a new teammate from here. They read this section first, then the status table at the top of
+`TRACKER.md`.
+
+### Done (do not redo)
+- **Trust layer v3** (quarantine, claim verification, rule-checker, hash-chained audit). 128 tests pass (`make test`, offline).
+- **Exp 1 complete on two models.**
+  - gpt-4.1: corrupted raw 14/72 (19%), guardrail 21%, summariser 28%, **wrapped 0/72**.
+  - gpt-4.1-mini: raw 30/72 (42%), **wrapped 0/72**.
+  - Adaptive attacks on v3: 0/12.
+  - Evidence: `results/EVIDENCE.md`, `docs/EVIDENCE_SUMMARY.md`.
+- **Exp 2 on the dev set:** 9/9 attacks stopped, 0/16 false blocks. It is dev only, NOT evidence (last run 4 Nov, before the UAE KB).
+- **KB:** 8 documents (5 UAE + NIS2, AI Act, GDPR).
+  - The UAE texts are local only (see below).
+  - Retrieval check: 3/9 (target 8/10). It is weak because the PDPL copy is Arabic and the questions are English.
+- **Citations:** all 4 rules have a first-pass provision, and 8 of 11 gaps have UAE citations. Status is still `draft`.
+  `docs/CITATION_CHECK.md` lists all 27 citations with PDF page numbers for Person A.
+- **Demo UI:** 7 screens, `make demo` → http://127.0.0.1:8765. See `docs/DEMO.md` (video script included).
+- **Public repo:** https://github.com/gupt-mudit/poisoned-telemetry (owner gupt-mudit).
+
+### Not in git: how to get each
+| What | Why it is not in git | How to get it |
+|---|---|---|
+| `.env` (API key, model IDs, `PT_AUDIT_KEY`) | secret | Copy `.env.example` and fill it in. Use the pinned models above. Get `PT_AUDIT_KEY` from Mudit privately: it is needed only to read the encrypted source text of old runs. Never paste a key into chat, a commit or a doc. |
+| UAE law texts (`kb/InputDocs/UAE_Telecom_Cyber/*.txt`) | "all rights reserved": never commit | Download from the official URLs in `kb/manifest.yaml`. The IA Regulation, Licence 2/2026 and AI Charter download with plain curl; the PDPL comes from u.ae. The telecom law PDF has outlined text, so it needs OCR: render with PDFKit (swift) and run tesseract. `pdftotext` and `pdftoppm` crash on Mudit's Mac (libhvf). Or ask Mudit for the files privately. |
+| `results/runs/` (52 MB of raw answers and audit logs) | size, and it has not been reviewed for publication | Ask Mudit for a private zip and unpack it to `results/runs/`. Without it, `eval.evidence`, the spot-check and the demo's Results screen are empty. The summary tables in `results/*.md` ARE in git. |
+| `kb/chroma/` (vector store) | rebuilt locally | Install Ollama, run `ollama pull nomic-embed-text`, then `make kb-ingest PY=.venv/bin/python`. |
+| ITU reference code | git submodule | `git submodule update --init` |
+
+### Setup on a new machine
+```bash
+git clone https://github.com/gupt-mudit/poisoned-telemetry && cd poisoned-telemetry
+git submodule update --init
+python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev,llm,kb,demo]"
+make test PY=.venv/bin/python          # 128 pass, offline
+make demo PY=.venv/bin/python          # demo UI
+```
+Always pass `PY=.venv/bin/python` to make (the Makefile defaults to `python3`). HolmesGPT is only needed to re-run Exp 1, which is already done.
+
+### Remaining work, in order (submission 10 Nov)
+| # | Task | Who | Command / file | Done when |
+|---|---|---|---|---|
+| 1 | **Blind holdout set**: about 20 malicious and 16 clean cases | Someone who has NOT read the rules: not Claude, not Person C | `docs/HOLDOUT_BRIEF.md`, `scenarios/holdout/TEMPLATE.yaml.example` | Files in `scenarios/holdout/`; then `make exp2-holdout PY=.venv/bin/python && make tables PY=.venv/bin/python` |
+| 2 | **Confirm the 27 citations** against the official PDFs | Person A | `docs/CITATION_CHECK.md` | Each rule has `status: verified` and a named `checked_by`; `RuleSet(strict=True)` loads |
+| 3 | **Get the 3 blocked texts** (English PDPL, cybercrime law FDL 34/2021, CSC Incident Response Framework v2.0) in a normal browser. Then fill G7, the G6 civil-liability part, and the G1 India and CSC parts. | Person A | `docs/KB_SOURCES.md`, `docs/gap_register.md` | Files in the UAE folder plus manifest entries; `make kb-ingest kb-check` |
+| 4 | **Re-run Exp 2 on the dev set** with the UAE KB (the citation figures are stale) | anyone, Claude OK | `make exp2 PY=.venv/bin/python && make tables PY=.venv/bin/python` | `results/exp2_dev_table.md` updated |
+| 5 | **Hand spot-check of 20 graded answers** (blind) | Person D | `results/spotcheck/SHEET.md` (needs `results/runs`), then `python -m eval.spotcheck --score` | Agreement reported in TRACKER and the report |
+| 6 | **Submission report**: not started | Claude can draft it | Sources: `docs/EVIDENCE_SUMMARY.md`, `results/EVIDENCE.md`, `docs/gap_register.md`, `docs/y3172_mapping.md`, TRACKER | Report with holdout numbers filled in from real runs only |
+| 7 | **Demo video**, 2–3 minutes | Person D | `docs/DEMO.md`: click **New session** first | Video file |
+| 8 | **Tag v2 and submit** | team | `git tag v2 && git push --tags` | Submitted 10 Nov |
+
+Suggested order: 1 and 2 start at once (they are the slowest and nobody else can do them); 4 and 6 run in parallel; 5 and 7 on 7–8 Nov; final numbers into the report on 9 Nov.
+
+### Gotchas
+- Any change to `trustlayer/` needs a wrapped Exp 1 re-run before its numbers are quoted.
+- Never commit UAE texts, `.env` or `results/runs/`. The repo is public, so check `git status` before every commit.
+- Do not try to get around the site blocks on uaelegislation.gov.ae, csc.gov.ae or EUR-Lex. Use a normal browser, or CELLAR for EU texts.
+- The demo writes its own log to `results/runs/audit_demo/`. "New session" archives it; nothing is deleted.
 
 ## Working style the team asked for
 Plain, simple explanations (several team members are not telecom or security specialists). Be honest about

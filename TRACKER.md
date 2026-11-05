@@ -3,6 +3,20 @@
 Legend: ✅ done · 🟡 needs your action · ⬜ not started
 Submission 10 Nov · shortlist 18 Nov · final 8 Dec (Dubai)
 
+> **Handover, 6 Nov:** a new teammate continues from here. Read the **HANDOVER** section in `CLAUDE.md` first. It covers
+> what is done, what is not in git (`.env`, UAE texts, `results/runs/`) and how to get each, setup on a new machine,
+> and the remaining tasks in order.
+>
+> **What's left (in order):**
+> 1. Blind holdout set (not Claude, not Person C)
+> 2. Person A confirms the 27 citations (`docs/CITATION_CHECK.md`)
+> 3. The 3 blocked UAE texts
+> 4. Re-run Exp 2 on the dev set
+> 5. Hand spot-check of 20 answers
+> 6. **Report (not started)**
+> 7. Demo video
+> 8. Tag v2 and submit
+
 | # | Step | Status | Owner | Done when | Evidence |
 |---|------|--------|-------|-----------|----------|
 | 1 | Spike kit (HolmesGPT test) | ✅ built · 🟡 run it | B | You know whether the subtle payload corrupts the conclusion | 4 set-ups load in HolmesGPT @65332c5; full `holmes ask` verified with a mock model: raw passes the C3 payload to the model, wrapped does not |
@@ -12,17 +26,20 @@ Submission 10 Nov · shortlist 18 Nov · final 8 Dec (Dubai)
 | 5 | HolmesGPT integration + Exp 1 runner + judge | ✅ | Claude | All set-ups run with one command | `make exp1 ARGS=--dry-run` |
 | 6 | Policy scenarios + runner + validator | ✅ | Claude | 8 scenarios + 5 variants match answer keys | `make validate` → ALL CONSISTENT |
 | 6b | Institutional agents with citation safeguard | ✅ | Claude | Opinions cite only retrieved passages | `tests/test_agents.py` |
-| 7 | KB wrapper around ITU pipeline | ✅ code + ITU repo + EU comparators (NIS2, AI Act, GDPR; 490 chunks; 2/2 comparator questions hit) · 🟡 UAE documents + UK texts | Claude + A | 8/10 retrieval questions hit in top 3 | `tests/test_kb.py` runs ITU's real ingest code; source list in `docs/KB_SOURCES.md` |
+| 7 | KB wrapper around ITU pipeline | ✅ code + ITU repo + EU comparators + 5 UAE texts (local only; 912 chunks) · retrieval 3/9 · 🟡 3 blocked UAE texts + UK texts | Claude + A | 8/10 retrieval questions hit in top 3 | `tests/test_kb.py` runs ITU's real ingest code; source list in `docs/KB_SOURCES.md` |
 | 8 | Exp 2 runner + automatic tables (dev/holdout) | ✅ | Claude | `make exp2 && make tables` | `results/exp2_dev_table.md` |
 | 9 | README, gap register (11 gaps), Y.3172 mapping | ✅ drafts · 🟡 fill | Claude + A | No `TO_VERIFY` left | `docs/` |
 | — | Fill `.env`, run `make spike` | ✅ 4 Nov | B | Spike decision recorded here | `results/FIRST_RUN_REPORT.md`, `results/spike/` — 0/10 corrupted (C1, C3); payload confirmed in tool output |
-| — | UAE documents + `kb/manifest.yaml` + `kb/questions.yaml` answers | 🟡 | A | `make kb-ingest && make kb-check` ≥ 8/10 | — |
+| — | UAE documents + `kb/manifest.yaml` + `kb/questions.yaml` answers | ✅ 5 of 8 texts (IA Reg, PDPL ar, AI Charter, telecom law, Licence 2/2026) · 🟡 English PDPL, cybercrime law, CSC IRF (sites block scripts) · 1 question TO_FILL | A | `make kb-ingest && make kb-check` ≥ 8/10 | `kb/manifest.yaml`, `docs/KB_SOURCES.md` |
 | — | Replace every `TO_VERIFY` (rules, scenarios, gap register); confirm Claude's first pass via `docs/CITATION_CHECK.md` | 🟡 | A | `RuleSet(strict=True)` loads | — |
 | — | Write blind holdout scenarios (~20 malicious, ~16 clean) | 🟡 | A or D (not C) | `make exp2-holdout` | — |
 | — | More clean dev cases (only 4 today) | ✅ 16 clean | Claude | ≥ 16 clean | `scenarios/policy/*_clean[2-4].yaml`, `make validate` ALL CONSISTENT |
 | — | Real runs: Exp 1 (reps 3), Exp 2 with real-model agents | ✅ Exp 1 300/300 · ✅ Exp 2 dev · 🟡 Exp 2 citations (needs KB) + holdout | B + D | Tables from real runs | `results/exp1_table.md`, `results/exp2_dev_table.md`; resume: `make exp1 ARGS="--reps 3"` |
-| — | Spot-check 20 judged answers | 🟡 | D | Agreement reported | `python -m eval.spotcheck` |
-| — | Demo video (2–3 min), tag v2, submit | ⬜ | D | Submitted 10 Nov | — |
+| — | Spot-check 20 judged answers | 🟡 sheet ready (blind) | D | Agreement reported | `results/spotcheck/SHEET.md` → `python -m eval.spotcheck --score` (needs `results/runs/`) |
+| — | Re-run Exp 2 dev with the UAE KB (citation figures from 4 Nov are stale) | ⬜ | anyone | `results/exp2_dev_table.md` updated | `make exp2 && make tables` |
+| — | Demo UI (7 screens) | ✅ 6 Nov | Claude | `make demo` works offline | `demo/`, `docs/DEMO.md`, `tests/test_demo.py` |
+| — | **Submission report** | ⬜ not started | Claude draft + team | Report with real holdout numbers | sources listed in CLAUDE.md HANDOVER |
+| — | Demo video (2–3 min), tag v2, submit | ⬜ | D | Submitted 10 Nov | script in `docs/DEMO.md` |
 
 ## Decisions and findings log
 - One-command first run: `python tools/first_run.py` (cross-platform), tested end to end against a mock model in an environment with HolmesGPT installed.
