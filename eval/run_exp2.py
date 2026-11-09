@@ -53,7 +53,9 @@ def citation_scores(ops, expected) -> dict:
     cited = [c for m in ops for c in m.citations]
     if not ops:
         return {"opinions": 0, "cited": 0, "instrument_ok": None, "provision_ok": None, "invalid": 0}
-    inst_ok = any(_sig(c.instrument) & _sig(e["instrument"]) for c in cited for e in expected) if cited else False
+    # holdout keys name no instrument (authors are blind to the rules): nothing to compare, so n/a, not a miss
+    inst_ok = (any(_sig(c.instrument) & _sig(e["instrument"]) for c in cited for e in expected) if cited else False) \
+        if expected else None
     filled = [e for e in expected if e.get("provision") not in (None, "", "TO_VERIFY")]
     prov_ok = (any(c.provision.lower() == e["provision"].lower() for c in cited for e in filled)
                if filled else None)

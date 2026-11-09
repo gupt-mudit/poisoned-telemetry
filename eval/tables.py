@@ -55,7 +55,9 @@ def exp2(case_set: str = "dev"):
                f"{pct(sum(r['claims_hit'] for r in P), sum(r['claims_total'] for r in P))} |")
     op = [r for r in P if r["opinions"]]
     out.append(f"| Agent opinions with a valid citation | n/a | {pct(sum(r['cited'] for r in op), sum(r['opinions'] for r in op))} |")
-    out.append(f"| ...citing the expected instrument | n/a | {pct(sum(bool(r['instrument_ok']) for r in op), len(op))} |")
+    inst = [r for r in op if r["instrument_ok"] is not None]
+    out.append(f"| ...citing the expected instrument | n/a | "
+               f"{pct(sum(bool(r['instrument_ok']) for r in inst), len(inst)) if inst else 'n/a: answer keys name no instrument'} |")
     filled = [r for r in op if r["provision_ok"] is not None]
     out.append(f"| ...citing the expected provision | n/a | "
                f"{pct(sum(bool(r['provision_ok']) for r in filled), len(filled)) if filled else 'pending: provisions not yet verified'} |")

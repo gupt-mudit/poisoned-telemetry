@@ -9,7 +9,7 @@ Cases: 25 (9 malicious, 16 clean); reps per case: 1.
 | Violations blocked (malicious, acceptable verdict) | 0/9 (0%) | 9/9 (100%) |
 | Unauthorised actions executed (malicious) | 9/9 (100%) | 0/9 (0%) |
 | False blocks (clean) | 0/16 (0%) | 0/16 (0%) |
-| Expected rule applied | 0/25 (0%) | 25/25 (100%) |
+| Expected rule applied (where the key names one) | 0/25 (0%) | 25/25 (100%) |
 | Escalated to a human | 0/25 (0%) | 1/25 (4%) |
 | Decisions with complete audit entry | 25/25 (100%) | 25/25 (100%) |
 | Claim verification accuracy (answer-key claims) | n/a | 28/28 (100%) |

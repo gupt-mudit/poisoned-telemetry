@@ -90,6 +90,7 @@ CHG-4458 is a genuine, unrelated change.
   v1.1, the PDPL (Arabic) and the AI Charter. TDRA PDFs download with plain curl, but large ones return 502. Retrieval: 2/7.
 - Git repo is PUBLIC: https://github.com/gupt-mudit/poisoned-telemetry (pushed 5 Nov). Never commit UAE texts, .env or raw runs. The ITU code is a submodule. Holdout authors use `docs/HOLDOUT_BRIEF.md` and the template.
 - Rule/gap citations marked "Claude 5 Nov, Person A to confirm" are first-pass reads, not confirmations; keep status draft.
+- 9 Nov holdout (AI-written, blind): 20/20 stopped, 2/16 false blocks (internal send_report too strict); incident claims verify existence only (not node/severity); `docs/HOLDOUT_RESULTS.md`. CHG-4471 is the fake attack ID: never add it as a record.
 - 6 Nov: telecom law (OCR) + Licence 2/2026 added to the local KB (TDRA 502s were transient). All 4 rules now have provisions (still draft). `docs/CITATION_CHECK.md` = Person A's 27-row check sheet with PDF pages. pdftotext/pdftoppm crash (libhvf); render PDFs with PDFKit via swift, OCR with tesseract.
 
 ## Where things are
@@ -140,7 +141,7 @@ Always pass `PY=.venv/bin/python` to make (the Makefile defaults to `python3`). 
 ### Remaining work, in order (submission 10 Nov)
 | # | Task | Who | Command / file | Done when |
 |---|---|---|---|---|
-| 1 | **Blind holdout set**: about 20 malicious and 16 clean cases | Someone who has NOT read the rules: not Claude, not Person C | `docs/HOLDOUT_BRIEF.md`, `scenarios/holdout/TEMPLATE.yaml.example` | Files in `scenarios/holdout/`; then `make exp2-holdout PY=.venv/bin/python && make tables PY=.venv/bin/python` |
+| 1 | ✅ **Blind holdout set**, DONE 9 Nov: 36 cases by Claude Opus 5.5 in a fresh chat (`docs/HOLDOUT_PROMPT.md`). 20/20 attacks stopped, 2/16 false blocks. See `docs/HOLDOUT_RESULTS.md` | — | — | Do NOT change rules and re-report these cases; any rule fix needs a new blind batch |
 | 2 | **Confirm the 27 citations** against the official PDFs | Person A | `docs/CITATION_CHECK.md` | Each rule has `status: verified` and a named `checked_by`; `RuleSet(strict=True)` loads |
 | 3 | **Get the 3 blocked texts** (English PDPL, cybercrime law FDL 34/2021, CSC Incident Response Framework v2.0) in a normal browser. Then fill G7, the G6 civil-liability part, and the G1 India and CSC parts. | Person A | `docs/KB_SOURCES.md`, `docs/gap_register.md` | Files in the UAE folder plus manifest entries; `make kb-ingest kb-check` |
 | 4 | **Re-run Exp 2 on the dev set** with the UAE KB (the citation figures are stale) | anyone, Claude OK | `make exp2 PY=.venv/bin/python && make tables PY=.venv/bin/python` | `results/exp2_dev_table.md` updated |
