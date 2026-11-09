@@ -90,8 +90,9 @@ function storyHTML(r) {
     <div class="story-top">
       <div>
         <div class="eyebrow">${mal ? "The attack" : "A normal, legitimate case"} · ${esc(sc.category_label)}</div>
-        <h3>${esc(sc.title)}</h3>
-        <p>${esc(sc.story)}</p>
+        <h3>${esc(plainTitle(sc.id) || sc.title)}</h3>
+        ${plainTitle(sc.id) && sc.id !== "CUSTOM" ? `<p class="pl-tech-line">${glossText(sc.title)}</p>` : ""}
+        <p>${glossText(sc.story)}</p>
       </div>
       <div class="scen-tags">
         <span class="badge ${mal ? "b-crit" : "b-good"}">${mal ? "attack" : "clean"}${sc.case !== "base" ? " · " + esc(sc.case.replaceAll("_", " ")) : ""}</span>
@@ -100,7 +101,8 @@ function storyHTML(r) {
     </div>
     <div class="bubble-row">
       <div class="bubble-who">${LICON.inbox}<span>Arrives as ${esc(PLAIN.channel[it.channel] || it.channel)}<br><span class="mono muted">${esc(it.source)}</span></span></div>
-      <blockquote class="bubble ${mal ? "bad" : ""}">${markFlags(it)}</blockquote>
+      <div><div class="bubble-cap">What the AI actually read</div>
+      <blockquote class="bubble ${mal ? "bad" : ""}">${glossHTML(markFlags(it))}</blockquote></div>
     </div>
     <p class="story-ask">The AI agent is asked to: ${plainAction(r.proposal)}</p>
   </div>`;
@@ -112,7 +114,7 @@ function laneRows(r) {
   const flags = [...new Set(r.flags.map((f) => PLAIN.flag[f.rule] || f.rule))];
   const claimLi = d.claims.map((c) => {
     const [w, cls, why] = PLAIN.claim[c.verification] || [c.verification, "b-mute", ""];
-    return `<li><span class="badge ${cls}"><span class="dot"></span>${w}</span><span>The message ${esc(c.text)}.<br><span class="muted small">${esc(c.evidence)} (${why})</span></span></li>`;
+    return `<li><span class="badge ${cls}"><span class="dot"></span>${w}</span><span>${/^message /i.test(c.text) ? "The " + esc(c.text) : "The message " + esc(c.text)}.<br><span class="muted small">${esc(c.evidence)} (${why})</span></span></li>`;
   }).join("");
   return [
     { label: "The message arrives",
@@ -130,8 +132,16 @@ function laneRows(r) {
     { label: "Is it allowed?",
       a: [LICON.none, "No rules", "The AI decides on its own."],
       b: [LICON.scale, "A fixed rule decides, not the AI",
-          `<div class="rule-plain">${esc(PLAIN.rule[d.rule_id] || d.rule_id)}</div><span class="muted small mono">${esc(d.rule_id)}</span>`] },
+          `<div class="rule-plain">${esc(PLAIN.rule[d.rule_id] || d.rule_id)}</div>${lawLine(d)}<span class="muted small mono">${esc(d.rule_id)}</span>`] },
   ];
+}
+
+/* The UAE source behind the deciding rule, so policy use is visible on the main screen. */
+function lawLine(d) {
+  const c = (d.citations || []).find((x) => x.rule_id === d.rule_id) || (d.citations || [])[0];
+  if (!c || !c.instrument) return "";
+  const main = c.instrument.split(";")[0].trim();
+  return `<div class="law-line"><b>Based on:</b> ${esc(main)} <span class="badge ${c.status === "verified" ? "b-good" : "b-info"}">${c.status === "verified" ? "verified" : "first pass"}</span></div>`;
 }
 
 function laneResult(r) {

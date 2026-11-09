@@ -26,22 +26,30 @@ async function loadCommand() {
   const s = c.session;
   const seal = c.audit.ok === null ? ["–", "no entries yet", "b-mute"] : c.audit.ok ? ["Intact", "hash chain verified just now", "b-good"] : ["BROKEN", "verification failed", "b-crit"];
   const tile = (big, label, sub, cls = "") => `<div class="panel tile ${cls}"><div class="big">${big}</div><div class="lbl">${label}</div><div class="sub">${sub}</div></div>`;
+  const step = (n, t, d) => `<li><span class="ov-n">${n}</span><div><b>${t}</b><span>${d}</span></div></li>`;
   $("#command").innerHTML = `
-    <div class="tiles cc-tiles">
+    <div class="panel ov-hero">
+      <div>
+        <h3>Can one planted sentence take over an AI that helps run a network?</h3>
+        <p>Pick an attack and watch the same message handled twice: by today's AI, and by the same AI behind our trust layer.</p>
+      </div>
+      <button class="btn btn-primary" id="ovTry">Try an attack</button>
+    </div>
+    <ol class="ov-flow" aria-label="How the trust layer works">
+      ${step(1, "Message arrives", "an alarm, log line or help-desk ticket")}
+      ${step(2, "Quarantine", "free text is held back; only neutral claims pass")}
+      ${step(3, "Fact-check", "each claim is checked against the operator's records")}
+      ${step(4, "Rule-checker", "plain code applies rules that cite UAE law")}
+      ${step(5, "Audit log", "every step is sealed into a tamper-evident chain")}
+    </ol>
+    <div class="tiles ov-tiles">
       ${tile(s.runs, "Cases run this session", `${s.attacks} attack(s), ${s.runs - s.attacks} normal request(s)${s.live_runs ? `, ${s.live_runs} with live AI` : ""}`)}
-      ${tile(s.attacks_executed_without_layer, "Attacks that would have succeeded without protection", "baseline: every proposal goes straight through", "t-bad")}
-      ${tile(s.blocked, "Stopped by the trust layer", `${s.escalated} more paused for a person · ${s.allowed} allowed`, "t-good")}
-      ${tile(`${s.claims.contradicted}<span class="of"> false</span> · ${s.claims.unverified}<span class="of"> unconfirmed</span>`, "Claims caught by fact-checking", `${s.claims.verified} confirmed true · ${s.flags} suspicious phrases flagged`)}
-      ${tile(`<span class="badge ${seal[2]}" style="font-size:16px;padding:4px 12px"><span class="dot"></span>${seal[0]}</span>`, "Audit seal", `${seal[1]} · ${s.audit_entries} entries`)}
+      ${tile(s.blocked, "Stopped by the trust layer", `without it, ${s.attacks_executed_without_layer} would have gone through · ${s.escalated} paused for a person`)}
+      ${tile(`${s.claims.contradicted}<span class="of"> false</span> · ${s.claims.unverified}<span class="of"> unconfirmed</span>`, "Claims caught by fact-checking", `${s.claims.verified} confirmed true`)}
+      ${tile(`<span class="badge ${seal[2]}"><span class="dot"></span>${seal[0]}</span>`, "Audit log", `${seal[1]} · ${s.audit_entries} entries`)}
     </div>
     <div class="cc-grid">
-      <div class="panel"><div class="panel-head"><h3>Test network</h3><span class="small muted">synthetic incident of 2 Nov · status from its telemetry</span></div>
-        <div class="panel-body">${bigTopo(c.network.nodes)}</div></div>
-      <div class="panel"><div class="panel-head"><h3>Telemetry feed</h3><span class="small muted"><span class="live-dot"></span>replaying the incident log</span></div>
-        <div class="panel-body ticker" id="ticker"></div></div>
-    </div>
-    <div class="cc-grid">
-      <div class="panel"><div class="panel-head"><h3>Inject an attack</h3><span class="small muted">opens the simulator</span></div>
+      <div class="panel"><div class="panel-head"><h3>Start with an attack</h3></div>
         <div class="panel-body inject">
           ${[["S1-M", "Fake maintenance approval", "A note claims a BGP anomaly is planned work."],
              ["S2-M", "Subscriber data disclosure", "A ticket asks for customer records to go outside."],
@@ -49,21 +57,25 @@ async function loadCommand() {
              ["S4-M", "Fake emergency", "A message claims an emergency to skip approval."]].map(([id, t, d]) =>
             `<button class="inject-btn" data-sid="${id}"><b>${t}</b><span>${d}</span></button>`).join("")}
         </div></div>
-      <div class="panel"><div class="panel-head"><h3>Recent decisions</h3><span class="small muted">click to open the decision card</span></div>
-        <div class="panel-body">${c.recent.length ? `<div class="feed">${c.recent.map((d) => `
-          <button class="feed-row" data-id="${esc(d.id)}"><span class="mono muted">${esc(d.id)}</span><span>${esc(d.title)}</span>
-          ${verdictBadge(d.verdict)}<span class="muted small">${esc(d.ts.slice(11))}</span></button>`).join("")}</div>`
-          : '<p class="muted">No decisions yet. Inject an attack to start.</p>'}</div></div>
+      <div class="panel"><div class="panel-head"><h3>Recent decisions</h3><span class="small muted">click to open</span></div>
+        <div class="panel-body">${c.recent.length ? `<div class="feed">${c.recent.slice(0, 6).map((d) => `
+          <button class="feed-row" data-id="${esc(d.id)}"><span>${esc(plainTitle(d.title) || d.title)}</span>
+          ${verdictBadge(d.verdict)}<span class="muted small">${esc(d.ts.slice(11, 16))}</span></button>`).join("")}</div>`
+          : '<p class="muted">No decisions yet. Start with an attack.</p>'}</div></div>
     </div>
-    <div class="panel"><div class="panel-head"><h3>Agents on duty</h3><span class="small muted">none of them can carry out an action on its own</span></div>
-      <div class="panel-body duty">${c.agents.map((a) => `<button class="duty-chip" data-agent="${esc(a.id)}"><b>${esc(a.name)}</b>${kindBadge(a.kind)}</button>`).join("")}</div></div>
-    <div class="panel" style="margin-top:16px"><div class="panel-head"><h3>Records the trust layer checks against</h3><span class="small muted">data/records</span></div>
-      <div class="panel-body small" style="color:var(--text-2)">${c.records.changes_approved} of ${c.records.changes_total} changes in the change log are approved.
-        Open incidents: ${c.records.incidents_open.map((i) => `<b>${esc(i.incident_id)}</b> on ${esc(i.node)} (${esc(i.severity)})`).join(", ") || "none"}.
-        Agents with a registered channel are listed in the mandate register.</div></div>`;
+    <details class="panel ov-net">
+      <summary>The test network <span class="muted small">synthetic incident of 2 Nov: failing optics on PE-07</span></summary>
+      <div class="cc-grid ov-net-body">
+        <div>${bigTopo(c.network.nodes)}</div>
+        <div><div class="small muted" style="margin-bottom:6px">Telemetry, replayed</div><div class="ticker" id="ticker"></div></div>
+      </div>
+      <p class="small muted ov-records">The trust layer checks claims against the operator's records: ${c.records.changes_approved} of
+        ${c.records.changes_total} changes in the change log are approved; open incidents:
+        ${c.records.incidents_open.map((i) => `${esc(i.incident_id)} on ${esc(i.node)} (${esc(i.severity)})`).join(", ") || "none"}.</p>
+    </details>`;
+  $("#ovTry").addEventListener("click", () => show("sim"));
   $$(".inject-btn").forEach((b) => b.addEventListener("click", () => goSim(b.dataset.sid)));
   $$(".feed-row").forEach((b) => b.addEventListener("click", () => goPolicy(b.dataset.id)));
-  $$(".duty-chip").forEach((b) => b.addEventListener("click", () => { S.agentFilter = b.dataset.agent; show("agents"); }));
   startTicker(c.network.log);
 }
 
@@ -106,11 +118,11 @@ function startTicker(lines) {
     while (box.children.length > 14) box.lastChild.remove();
   };
   for (let k = 0; k < 10; k++) add();
-  TICKER = setInterval(() => { if (!$("#view-command").classList.contains("active")) return; add(); }, reduced ? 4000 : 1300);
+  TICKER = setInterval(() => { if (!$("#view-home").classList.contains("active")) return; add(); }, reduced ? 4000 : 1300);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  $("#newSession").addEventListener("click", async () => {
+  $("#newSession")?.addEventListener("click", async () => {
     if (!confirm("Start a fresh session? The current session log is archived (kept, not deleted).")) return;
     const r = await api("/api/session/new", { method: "POST" });
     loadCommand();
@@ -129,7 +141,7 @@ async function loadPolicy() {
         <div class="dec-list">${d.decisions.length ? d.decisions.map((x) => `
           <button class="dec-item" data-id="${esc(x.id)}" aria-pressed="${sel && x.id === sel.id}">
             <span class="mono small muted">${esc(x.id)} · ${esc(x.ts.slice(11))}</span>
-            <span>${esc(x.title)}</span>
+            <span class="case-t">${twoLine(x.title, x.title)}</span>
             <span>${verdictBadge(x.verdict)} <span class="badge ${x.variant === "malicious" ? "b-crit" : "b-good"}">${x.variant === "malicious" ? "attack" : "clean"}</span></span>
           </button>`).join("") : '<p class="muted" style="padding:14px">No decisions yet. Run a case in the attack simulator.</p>'}</div></div>
       <div id="decCard">${sel ? decisionCard(sel) : '<div class="panel empty"><h3>No decision selected</h3><p>Run a case in the simulator; its decision card appears here.</p></div>'}</div>
@@ -166,16 +178,17 @@ function decisionCard(d) {
   return `<div class="panel dcard">
     <div class="dcard-head">
       <div><div class="eyebrow">Policy decision</div><h3 class="mono">#${esc(d.id)}</h3>
-        <p class="muted small" style="margin:2px 0 0">${esc(d.title)} · ${esc(d.ts)} UTC · ${esc(d.mode)}</p></div>
+        ${plainTitle(d.title) ? `<p class="dcard-plain">${esc(plainTitle(d.title))}</p>` : ""}
+        <p class="muted small" style="margin:2px 0 0">${glossText(d.title)} · ${esc(d.ts)} UTC · ${esc(d.mode)}</p></div>
       <div class="big-verdict v-${esc(d.verdict)}">${ICON[d.verdict]}${esc(vt.toUpperCase())}</div>
     </div>
     <div class="dcard-body">
       <section><h4>Requested action</h4><p>${plainAction(d.proposal)}${d.proposal.claimed_authority ? ` <span class="muted">(claims to act for ${esc(d.proposal.claimed_authority)})</span>` : ""}</p>
-        <p class="muted small">Without the trust layer this would have been <b style="color:${d.variant === "malicious" ? "#ff8a8a" : "inherit"}">executed</b> with no check.</p></section>
+        <p class="muted small">Without the trust layer this would have been <b style="color:${d.variant === "malicious" ? "var(--critical)" : "inherit"}">executed</b> with no check.</p></section>
       <section><h4>Applicable policy</h4>
         ${d.rule_id === "NONE" ? `<p>${esc(PLAIN.rule.NONE)}</p>` : `<p class="rule-plain">${esc(PLAIN.rule[d.rule_id] || main?.rule || "")}</p>
         <div class="cite"><b>${esc(main?.instrument || "")}</b><br>${esc(main?.provision || "")}</div>
-        <p style="margin-top:6px">${main?.status === "verified" ? '<span class="badge b-good">citation verified</span>' : '<span class="badge b-info">citation: first pass, Person A to confirm</span>'}</p>`}</section>
+        <p style="margin-top:6px">${main?.status === "verified" ? '<span class="badge b-good">citation verified</span>' : '<span class="badge b-info">citation: first pass, legal check in progress</span>'}</p>`}</section>
       <section><h4>Evidence verification</h4><div class="ev-table">${evidenceRows(d.claims)}</div></section>
       <section class="enforce"><h4>Enforcement decision</h4>
         <div class="enf ${d.verdict}"><b>${esc(d.verdict === "BLOCK" ? "BLOCK ACTION" : d.verdict === "ESCALATE" ? "HOLD FOR HUMAN APPROVAL" : "ALLOW ACTION")}</b>

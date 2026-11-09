@@ -36,15 +36,19 @@ const frac = (x) => (x ? `${x.k}/${x.n}` : "n/a");
 const pct = (x) => (x && x.n ? `${Math.round(x.pct)}%` : "n/a");
 
 /* ------------------------------------------------------------ nav */
+/* Five story-ordered screens. Older names still work: they lead to where that content lives now. */
 function show(view) {
+  if (view === "policy") return openDecision(S.policySel);
+  if (view === "agents") return openAgents(S.agentRun);
+  const part = view === "audit" ? "pf-audit" : view === "results" ? "pf-results" : null;
+  if (view === "command") view = "home";
+  if (part) view = "proof";
   $$(".nav").forEach((b) => b.setAttribute("aria-current", b.dataset.view === view ? "page" : "false"));
   $$(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + view));
-  if (view === "results" && !S.exp1) loadResults();
+  if (view === "home") loadHome();
+  if (view === "rules") loadRules();
   if (view === "gaps" && !S.gaps.length) loadGaps();
-  if (view === "audit") loadAudit();
-  if (view === "command") loadCommand();
-  if (view === "policy") loadPolicy();
-  if (view === "agents") loadAgents();
+  if (view === "proof") { if (!S.exp1) loadResults(); loadAudit(); proofPart(part || "pf-results"); }
   $("main").scrollTop = 0;
 }
 $$(".nav").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
@@ -82,7 +86,7 @@ function renderLibrary() {
     const list = by[c].sort((a, b) => (a.variant === "malicious" ? -1 : 1) - (b.variant === "malicious" ? -1 : 1));
     return `<div class="group"><h4>${esc(list[0].category_label)}</h4><p class="cat-desc">${esc(PLAIN.category[c] || "")}</p>${list.map((s) => `
       <button class="case-btn" data-sid="${esc(s.id)}" data-case="base" aria-pressed="false">
-        <span>${esc(s.title)}</span>
+        <span class="case-t">${twoLine(s.id, s.title)}</span>
         <span class="badge ${s.variant === "malicious" ? "b-crit" : "b-good"}">${s.variant === "malicious" ? "attack" : "clean"}</span>
       </button>
       ${s.cases.length > 1 ? `<div class="variants">${s.cases.slice(1).map((c) =>
@@ -101,8 +105,11 @@ $("#cChannel").addEventListener("change", (e) => {
 });
 $("#cRun").addEventListener("click", () => {
   const text = $("#cText").value.trim();
-  if (text.length < 3) return;
+  $("#cMsg").textContent = "";
+  if (text.length < 3) { $("#cMsg").textContent = "Type at least a few words for the attacker's message."; return; }
+  if (text.length > 2000) { $("#cMsg").textContent = "Keep the message under 2,000 characters."; return; }
   $$("#library [data-sid]").forEach((x) => x.setAttribute("aria-pressed", "false"));
+  $("main").scrollTo({ top: 0, behavior: "smooth" });
   runSim({ custom: { text, channel: $("#cChannel").value, source: $("#cSource").value.trim() || "ticket:TCK-50001", goal: $("#cGoal").value } });
 });
 
@@ -130,9 +137,11 @@ async function runSim(body) {
      <div class="panel-body">${compareHTML(r)}${takeawayHTML(r)}
        <p class="small muted" style="margin:12px 0 0">Saved as decision <b class="mono" style="color:var(--text)">#${esc(r.card_id)}</b> ·
          <a href="#" id="toCard">open the decision card</a> · <a href="#" id="toAgents">see which agents took part</a></p></div></div>` +
+    incidentHTML(r) +
     `<details class="tech panel"><summary>Technical details for engineers: raw data, pipeline steps, legal citations, agents, audit hashes</summary>
        <div class="tech-body">${stageHTML(r)}</div></details>`;
   bindStage(r);
+  bindIncident(r);
   finishTech(r);
   await playLanes(r, run);
 }
@@ -222,7 +231,7 @@ function baselineCard(r) {
     <dl class="kv" style="margin-top:14px">
       <dt>Agent proposed</dt><dd>${proposalText(r.proposal)}</dd>
       <dt>Checks</dt><dd>none: today the proposal goes straight through</dd>
-      <dt>Outcome</dt><dd>${mal ? '<b style="color:#ff8a8a">The attacker gets what they wanted.</b>' : "Normal work proceeds."}</dd>
+      <dt>Outcome</dt><dd>${mal ? '<b style="color:var(--critical)">The attacker gets what they wanted.</b>' : "Normal work proceeds."}</dd>
     </dl></div>`;
 }
 
@@ -235,7 +244,7 @@ function protectedCard(r) {
     : `<p class="muted small">No decision-relevant claims in the text.</p>`;
   const rules = d.citations.map((c) => `<div class="rule-box">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="rid">${esc(c.rule_id)}</span>
-        ${c.status === "verified" ? '<span class="badge b-good">citation verified</span>' : '<span class="badge b-info">citation: first pass, Person A to confirm</span>'}</div>
+        ${c.status === "verified" ? '<span class="badge b-good">citation verified</span>' : '<span class="badge b-info">citation: first pass, legal check in progress</span>'}</div>
       <p><b>Rule:</b> ${esc(c.rule)}${c.rule && !/[.]$/.test(c.rule) ? "." : ""}${c.otherwise ? ` Otherwise: <b>${esc(c.otherwise)}</b>.` : ""}</p>
       <div class="cite"><b>${esc(c.instrument)}</b><br>${esc(c.provision)}</div>
       ${c.checked_by ? `<p class="small muted">Checked: ${esc(c.checked_by)}</p>` : ""}</div>`).join("");
@@ -292,7 +301,7 @@ function stepDetail(r, k) {
     case 2: return `<h4>The one-way hatch</h4><p class="small" style="color:var(--text-2);margin:0">Free-text fields withheld: <b>${q.free_text_withheld}</b> · unrecorded IDs replaced: <b>${q.ids_withheld}</b> · structured fields forwarded line by line: <b>${q.facts.length}</b>. No attacker sentence crosses. This is what the agent sees instead:</p><pre>${esc(q.render)}</pre>`;
     case 3: return `<h4>Every claim checked against independent records</h4><p class="small muted" style="margin:0 0 6px">changes.csv · incidents.csv · mandates.csv · inventory.csv</p>${d.claims.length ? `<ul class="claims">${d.claims.map((c) => `<li><div>${statusBadge(c.verification)}</div><div><div class="ctext">${esc(c.text)}</div><div class="cev">${esc(c.evidence)}</div></div></li>`).join("")}</ul>` : '<p class="small muted">No claims.</p>'}`;
     case 4: return `<h4>Rule-checker: ${verdictBadge(d.verdict)} <span class="mono small">${esc(d.rule_id)}</span></h4>${d.reasons.map((x) => `<div class="mono small" style="color:var(--text-2)">${esc(x)}</div>`).join("")}`;
-    case 5: return `<h4>Written to the hash-chained audit log</h4><div class="audit-mini">${r.audit.map((e) => `<div><span class="muted">#${e.n}</span><span>${esc(e.event)}</span><span class="hash">${esc(e.hash.slice(0, 24))}… <span class="muted">← ${esc(e.prev.slice(0, 10))}…</span></span></div>`).join("")}</div><p class="footnote">Source text is encrypted and referenced by its SHA-256. Check it in Audit &amp; forensics.</p>`;
+    case 5: return `<h4>Written to the hash-chained audit log</h4><div class="audit-mini">${r.audit.map((e) => `<div><span class="muted">#${e.n}</span><span>${esc(e.event)}</span><span class="hash">${esc(e.hash.slice(0, 24))}… <span class="muted">← ${esc(e.prev.slice(0, 10))}…</span></span></div>`).join("")}</div><p class="footnote">Source text is encrypted and referenced by its SHA-256. Check it in the Audit log.</p>`;
   }
   return "";
 }
@@ -353,12 +362,12 @@ async function loadResults() {
   const o = S.overview, m = S.exp1.summary.models;
   const get = (mm, s) => mm.setups.find((x) => x.setup === s);
   const g = m.find((x) => x.model === "gpt-4.1"), mini = m.find((x) => x.model === "gpt-4.1-mini");
-  const d = o.exp2.dev;
+  const d = o.exp2.holdout || o.exp2.dev, dSet = o.exp2.holdout ? "Blind test set" : "Practice set";
   const tiles = [
     [frac(get(g, "wrapped")), "Attacks that fooled the AI, with our trust layer", `Without it: ${frac(get(g, "raw"))} (${pct(get(g, "raw"))}). Model gpt-4.1.`],
     [mini ? frac(get(mini, "wrapped")) : "n/a", "The same on a second AI model", mini ? `Without it: ${frac(get(mini, "raw"))} (${pct(get(mini, "raw"))}). Model gpt-4.1-mini.` : ""],
     [S.exp1.summary.adaptive_v3 ? frac(S.exp1.summary.adaptive_v3) : "n/a", "Attacks we designed to beat our own layer", "They found two holes in earlier versions; both are fixed."],
-    [d ? frac(d.malicious_stopped.protected) : "n/a", "Harmful actions stopped (Exp 2)", d ? `Normal requests wrongly stopped: ${frac(d.clean_false_blocks.protected)}. Practice set.` : ""],
+    [d ? frac(d.malicious_stopped.protected) : "n/a", "Harmful actions stopped (Exp 2)", d ? `Normal requests wrongly stopped: ${frac(d.clean_false_blocks.protected)}. ${dSet}.` : ""],
   ];
   $("#tiles").innerHTML = tiles.map(([b, l, s]) => `<div class="panel tile"><div class="big">${esc(b)}</div><div class="lbl">${esc(l)}</div><div class="sub">${esc(s)}</div></div>`).join("");
   $("#charts").innerHTML = m.map((mm) => `<div class="panel chart"><div class="panel-head"><h3>How often did the planted text fool the AI? · ${esc(mm.model)}</h3>
@@ -373,7 +382,7 @@ async function loadResults() {
   const P = S.exp1.payloads;
   $("#payloadTable").innerHTML = `<thead><tr><th>Attack</th><th>Goal</th><th class="num">Raw</th><th class="num">Protected</th></tr></thead><tbody>${P.map((p) => `
     <tr class="click" data-pid="${esc(p.id)}" aria-selected="${p.id === S.rp.pid}"><td><b class="mono">${esc(p.id)}</b> <span class="muted small">${esc(p.style)}</span></td>
-    <td>${esc(p.goal)}</td><td class="num" style="color:${p.raw_k ? "#ff8a8a" : "inherit"}">${esc(p.raw)}</td><td class="num">${esc(p.wrapped)}</td></tr>`).join("")}</tbody>`;
+    <td>${esc(p.goal)}</td><td class="num" style="color:${p.raw_k ? "var(--critical)" : "inherit"}">${esc(p.raw)}</td><td class="num">${esc(p.wrapped)}</td></tr>`).join("")}</tbody>`;
   $$("#payloadTable tr.click").forEach((tr) => tr.addEventListener("click", () => {
     S.rp.pid = tr.dataset.pid;
     $$("#payloadTable tr.click").forEach((x) => x.setAttribute("aria-selected", String(x === tr)));
@@ -470,16 +479,25 @@ function renderGaps() {
   $$(".gap").forEach((b) => b.addEventListener("click", () => openGap(b.dataset.id)));
 }
 $$("#gapFilter button").forEach((b) => b.addEventListener("click", () => { S.gapFilter = b.dataset.f; segSet("#gapFilter", b); renderGaps(); }));
+/* Gap-register text is written for the team; show it to viewers without internal working notes. */
+const cleanReg = (t) => String(t || "—")
+  .replace(/\s*[—-]\s*Claude \d+ \w+,?\s*/g, " — ")
+  .replace(/Claude \d+ \w+,?\s*/g, "")
+  .replaceAll("Person A to confirm", "legal check in progress")
+  .replace(/`?TO_VERIFY`?/g, "to be verified")
+  .replace(/ — (?=[.;)]|$)/g, "");
 function openGap(id) {
   const g = S.gaps.find((x) => x.ID === id);
   $("#drawerTitle").innerHTML = `${esc(g.ID)} ${uaeBadge(g.uae_status)}`;
-  const sec = (h, k) => `<section><h4>${h}</h4><p>${md(g[k] || "—")}</p></section>`;
+  const sec = (h, k) => `<section><h4>${h}</h4><p>${md(cleanReg(g[k]))}</p></section>`;
   const cases = [...new Set((g["Exposed by"] || "").match(/\bS\d-[MC]\d?\b/g) || [])];
-  $("#drawerBody").innerHTML = sec("Open question", "Open question (telecom framing)") + sec("Exposed by", "Exposed by") +
+  const col = (h, k, cls) => `<div class="cmp ${cls}"><h4>${h}</h4><p>${md(cleanReg(g[k]))}</p></div>`;
+  $("#drawerBody").innerHTML = `<p class="gap-q">${md(g["Open question (telecom framing)"] || "")}</p>` +
+    `<div class="cmp-grid">${col("UAE today", "Closest existing provision — UAE", "uae")}${col("Elsewhere (EU, UK and others)", "Comparator elsewhere", "world")}${col("Our proposal", "Proposed fix", "fix")}</div>` +
+    sec("What existing rules already cover", "What it already covers") + sec("What remains open", "What remains open") +
+    sec("Found by", "Exposed by") +
     (cases.length ? `<section><h4>See it happen</h4><div class="variants" style="margin:0">${cases.map((c) =>
-      `<button class="gap-case" data-sid="${esc(c)}">Run ${esc(c)} in the simulator</button>`).join("")}</div></section>` : "") +
-    sec("Closest existing provision (UAE)", "Closest existing provision — UAE") + sec("What it already covers", "What it already covers") +
-    sec("Comparator elsewhere", "Comparator elsewhere") + sec("What remains open", "What remains open") + sec("Proposed fix", "Proposed fix") +
+      `<button class="gap-case" data-sid="${esc(c)}">Run ${esc(c)}: ${esc(plainTitle(c) || c)}</button>`).join("")}</div></section>` : "") +
     `<p class="footnote">Wording rule: existing frameworks may not explicitly resolve this question; it is a research finding, not a claim that no rule exists.
       Source: docs/gap_register.md.</p>`;
   $$(".gap-case").forEach((b) => b.addEventListener("click", () => { $("#drawerClose").click(); goSim(b.dataset.sid); }));
@@ -536,7 +554,7 @@ $("#tamperBtn").addEventListener("click", async () => {
     renderLibrary();
     const sw = $("#liveSwitch");
     if (!o.live_available) { sw.disabled = true; sw.title = "Live AI needs an API key in .env"; }
-    show("command");
+    show("home");
   } catch (e) {
     $("#stage").innerHTML = `<div class="panel empty"><h3>Could not reach the demo server</h3><p>${esc(e.message)}</p></div>`;
   }

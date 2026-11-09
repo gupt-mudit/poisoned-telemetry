@@ -17,3 +17,5 @@ results/spotcheck/
 
 # private hand-over zips (raw runs, UAE texts): share directly, never commit
 handover_private/
+# final report with contact details: submit this, never commit it
+report/final_private/

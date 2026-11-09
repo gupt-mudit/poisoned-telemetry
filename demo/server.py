@@ -21,6 +21,15 @@ STATIC = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="Poisoned Telemetry demo", docs_url=None, redoc_url=None)
 
 
+@app.middleware("http")
+async def revalidate_ui(request, call_next):
+    """Make the browser re-check the page and its static files, so an updated UI never shows from a stale cache."""
+    resp = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
 class Custom(BaseModel):
     text: str = Field(min_length=3, max_length=2000)
     channel: str = Field("ticket", pattern="^(ticket|telemetry|agent)$")

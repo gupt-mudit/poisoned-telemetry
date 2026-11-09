@@ -272,7 +272,8 @@ def simulate(sid: str | None = None, case: str = "base", custom: dict | None = N
         "live": live_out,
         "card_id": card_id,
         "audit": [{"n": start + k + 1, "event": e["event"], "actor": e["actor"], "hash": e["hash"],
-                   "prev": e["prev"], "source_ref": e.get("source_ref")} for k, e in enumerate(entries)],
+                   "prev": e["prev"], "source_ref": e.get("source_ref"), "ts": e.get("ts")}
+                  for k, e in enumerate(entries)],
         "mode": "live" if live else "offline",
     }
 
