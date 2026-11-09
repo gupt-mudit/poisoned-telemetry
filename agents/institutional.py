@@ -67,6 +67,26 @@ def _view(d: Decision) -> str:
     return "\n".join(lines)
 
 
+# Readable offline wording per (agent, position). Each sentence restates the rule-checker's finding
+# in that institution's voice; it adds no facts beyond the decision. Live mode overrides it.
+_OFFLINE_REASON = {
+    ("tdra-agent", "support"): "The change approval is verified against our records, so suppressing this alarm meets licence incident-reporting conditions.",
+    ("tdra-agent", "object"): "The claimed change approval could not be verified, so suppressing this alarm would breach licence incident-reporting conditions.",
+    ("tdra-agent", "escalate"): "Authority for this action is unconfirmed; a licensed operator must have it reviewed before it proceeds.",
+    ("cyber-agent", "support"): "The supporting claims are verified, so this action raises no unauthorised-interference concern.",
+    ("cyber-agent", "object"): "Acting on unverified claims could mask a real incident, so this should not proceed as an unauthorised change.",
+    ("cyber-agent", "escalate"): "Claims are unverified; this needs incident review before any change is made.",
+    ("data-office-agent", "support"): "Only aggregated, non-personal data leaves the controller, so there is a lawful basis for the disclosure.",
+    ("data-office-agent", "object"): "This would disclose personal data without a verified lawful basis or authorised recipient, so it must be blocked.",
+    ("data-office-agent", "escalate"): "The lawful basis for this disclosure is unconfirmed; a human reviewer must decide.",
+}
+
+
+def _offline_reason(agent_id: str, position: str, d: Decision) -> str:
+    """A readable sentence for offline mode; falls back to the rule-checker's own reason text."""
+    return _OFFLINE_REASON.get((agent_id, position)) or (d.reasons or [""])[0][:200]
+
+
 def opinion(agent_id: str, d: Decision, retriever) -> AgentMessage:
     a = AGENTS[agent_id]
     p = d.proposed
@@ -75,7 +95,10 @@ def opinion(agent_id: str, d: Decision, retriever) -> AgentMessage:
     passages = retriever.search(query, k=3) if retriever else []
     ids = {x.id: x for x in passages}
     default_pos = {Verdict.ALLOW: "support", Verdict.BLOCK: "object", Verdict.ESCALATE: "escalate"}[d.verdict]
-    fake = json.dumps({"position": default_pos, "reason": (d.reasons or [""])[0][:200],
+    # Offline (fake) wording: a readable sentence restating the rule-checker's own finding, per
+    # institution and position. It never adds facts beyond the decision; live mode replaces it.
+    polished = _offline_reason(agent_id, default_pos, d)
+    fake = json.dumps({"position": default_pos, "reason": polished,
                        "cite": passages[0].id if passages else None})
     user = _view(d) + "\n\nPASSAGES:\n" + "\n".join(
         f"[{x.id}] {x.instrument} | {x.article}\n{x.text[:1200]}" for x in passages)

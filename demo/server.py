@@ -40,6 +40,11 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/clean")
+def clean():
+    return FileResponse(STATIC / "clean.html")
+
+
 @app.get("/api/overview")
 def overview():
     return engine.overview()

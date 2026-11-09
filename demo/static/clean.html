@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poisoned Telemetry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e14; --bg2:#0e131b; --panel:#121823; --panel2:#161d2a; --line:#222c3a; --line2:#2c3848;
+  --ink:#eef3f9; --muted:#9fb0c3; --faint:#6b7c90;
+  --blue:#4c8dff; --blue-glow:rgba(76,141,255,.35);
+  --ok:#2fd27a; --ok-weak:rgba(47,210,122,.12); --ok-line:rgba(47,210,122,.4);
+  --danger:#ff5c5c; --danger-weak:rgba(255,92,92,.1); --danger-line:rgba(255,92,92,.38);
+  --warn:#ffb23e;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(900px 500px at 20% -5%,rgba(76,141,255,.14),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(47,210,122,.08),transparent 55%)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+header{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(10,14,20,.7);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:62px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em;font-size:16px}
+.logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--blue),#7aa8ff);display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:0 0 20px var(--blue-glow)}
+.tag-mini{font-size:12px;color:var(--faint);font-weight:500}
+
+.hero{padding:76px 0 40px;text-align:center}
+.hero .eyebrow{font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin-bottom:20px}
+.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.06;font-weight:900;letter-spacing:-.025em;max-width:860px;margin:0 auto;
+  background:linear-gradient(180deg,#fff,#c6d4e6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{margin:22px auto 0;max-width:640px;color:var(--muted);font-size:18px}
+
+section{padding:30px 0;position:relative}
+.step-label{display:flex;align-items:center;gap:11px;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:18px}
+.step-label b{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);color:var(--blue);font-size:12px}
+
+.cases{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:860px){.cases{grid-template-columns:repeat(2,1fr)}}
+.case{cursor:pointer;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px;transition:.2s;min-height:96px;position:relative;overflow:hidden}
+.case:hover{border-color:var(--line2);transform:translateY(-3px);background:var(--panel2)}
+.case.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 8px 30px var(--blue-glow)}
+.case.sel::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--blue-glow),transparent 50%);opacity:.5}
+.case .tag{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;position:relative}
+.case.attack .tag{color:var(--danger)} .case.clean .tag{color:var(--ok)}
+.case h4{font-size:14px;font-weight:600;margin-top:8px;line-height:1.3;position:relative}
+
+.msg{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;position:relative;transition:.3s}
+.msg.sending{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 10px 40px var(--blue-glow)}
+.msg .meta{font-size:11.5px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.msg .meta .live{width:7px;height:7px;border-radius:50%;background:var(--danger);box-shadow:0 0 10px var(--danger);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.ticket{font-family:var(--mono);font-size:14px;background:#0b0f16;border:1px solid var(--line);border-radius:11px;padding:15px 17px;color:#cdd9e8;line-height:1.7}
+.ticket mark{background:rgba(255,92,92,.16);color:#ff8f8f;border-radius:5px;padding:2px 5px;font-weight:600;box-shadow:0 0 0 1px var(--danger-line)}
+.ask{margin-top:15px;font-size:15px;color:var(--muted)}.ask b{color:var(--ink);font-weight:700}
+.runrow{display:flex;justify-content:center;gap:12px;margin:28px 0 4px}
+.btn{font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;border:none;border-radius:11px;padding:13px 26px;transition:.18s;position:relative}
+.btn.primary{background:linear-gradient(135deg,var(--blue),#6aa0ff);color:#fff;box-shadow:0 8px 28px var(--blue-glow)}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 36px var(--blue-glow)}
+.btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line2)}.btn.ghost:hover{border-color:var(--blue)}
+.btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:none}
+
+/* connector wire */
+.wire{height:46px;position:relative;margin-top:4px}
+.wire svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.wire path{fill:none;stroke:var(--line2);stroke-width:2}
+.wire .flow{stroke:var(--blue);stroke-dasharray:10 14;stroke-width:2.5;opacity:0;filter:drop-shadow(0 0 6px var(--blue-glow))}
+.wire.go .flow{opacity:1;animation:dash 1.1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-48}}
+
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:780px){.lanes{grid-template-columns:1fr}}
+.lane{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;position:relative;transition:.3s}
+.lane.bad.active{border-color:var(--danger-line);box-shadow:0 12px 40px rgba(255,92,92,.14)}
+.lane.good.active{border-color:var(--ok-line);box-shadow:0 12px 40px rgba(47,210,122,.14)}
+.lane .head{padding:16px 19px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--line)}
+.lane.bad .head{background:linear-gradient(180deg,var(--danger-weak),transparent)}
+.lane.good .head{background:linear-gradient(180deg,var(--ok-weak),transparent)}
+.lane .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800;flex:none}
+.lane.bad .ic{background:var(--danger);box-shadow:0 0 16px rgba(255,92,92,.5)}
+.lane.good .ic{background:var(--ok);box-shadow:0 0 16px rgba(47,210,122,.5)}
+.lane .head .k{font-size:15px;font-weight:700}.lane .head .s{font-size:12px;color:var(--muted)}
+.body{padding:18px 19px;display:flex;flex-direction:column;gap:13px;min-height:300px}
+
+.stepc{display:flex;gap:12px;opacity:0;transform:translateY(12px);transition:.5s cubic-bezier(.2,.8,.25,1)}
+.stepc.in{opacity:1;transform:none}
+.stepc .n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--faint);transition:.3s}
+.stepc.in .n{color:var(--ink);border-color:var(--blue)}
+.stepc .c .t{font-weight:600;font-size:14.5px}
+.stepc .c .d{color:var(--muted);font-size:13px;margin-top:3px}
+.quote{font-family:var(--mono);font-size:12px;background:#0b0f16;border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-top:8px;color:#9fb0c3;position:relative;overflow:hidden}
+.quote.scan::after{content:"";position:absolute;top:0;left:-40%;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,var(--blue-glow),transparent);animation:sweep 1.3s ease-in-out 2}
+@keyframes sweep{to{left:120%}}
+.chips{margin-top:8px}
+.claimchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:4px 11px;margin:4px 6px 0 0;
+  opacity:0;transform:scale(.6);transition:.4s cubic-bezier(.3,1.5,.5,1)}
+.claimchip.show{opacity:1;transform:none}
+.claimchip.bad{background:var(--danger-weak);color:#ff9b9b;box-shadow:inset 0 0 0 1px var(--danger-line)}
+.claimchip.warn{background:rgba(255,178,62,.12);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(255,178,62,.35)}
+.thinking{display:inline-flex;gap:4px;margin-top:6px}
+.thinking span{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:bob 1s infinite}
+.thinking span:nth-child(2){animation-delay:.15s}.thinking span:nth-child(3){animation-delay:.3s}
+@keyframes bob{50%{transform:translateY(-5px);opacity:.5}}
+
+.verdict{margin-top:auto;display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;padding:14px 16px;border-radius:12px;
+  opacity:0;transform:scale(.8);transition:.45s cubic-bezier(.3,1.6,.45,1)}
+.verdict.in{opacity:1;transform:none}
+.verdict.bad{background:var(--danger);color:#fff;box-shadow:0 10px 30px rgba(255,92,92,.35)}
+.verdict.good{background:var(--ok);color:#06240f;box-shadow:0 10px 30px rgba(47,210,122,.3)}
+.verdict.in.shake{animation:shk .5s}
+@keyframes shk{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.cite{font-size:12px;color:var(--muted);margin-top:10px;opacity:0;transition:.4s}.cite.in{opacity:1}.cite b{color:var(--ink)}
+
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:780px){.proof{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.card h3{font-size:16px;font-weight:700}.card .sub{color:var(--muted);font-size:13px;margin-top:4px}
+.stats{display:flex;gap:30px;margin-top:20px}
+.stat .big{font-size:40px;font-weight:900;letter-spacing:-.03em;line-height:1;color:var(--ok);font-variant-numeric:tabular-nums}
+.stat .lab{font-size:12.5px;color:var(--muted);margin-top:7px;max-width:120px}
+.audit-out{margin-top:18px;display:flex;flex-direction:column;gap:11px}
+.aline{display:flex;align-items:center;gap:11px;font-size:14px;font-weight:600;opacity:0;transform:translateX(-10px);transition:.45s}
+.aline.in{opacity:1;transform:none}
+.aline .b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;flex:none;transform:scale(.5);transition:.4s cubic-bezier(.3,1.6,.5,1)}
+.aline.in .b{transform:none}
+.aline.ok .b{background:var(--ok)}.aline.caught .b{background:var(--danger)}
+.aline .m{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--faint);margin-left:auto}
+/* network scene */
+.netscene{margin:26px auto 0;max-width:760px;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px 6px;position:relative;overflow:hidden}
+.netscene .cap{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:2px}
+.netscene .cap .bad{color:var(--danger)}
+.net svg{display:block;width:100%;height:auto}
+.mast{stroke:#4a5a6e;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.mast2{stroke:#39465699;stroke-width:1.5}
+.link{stroke:var(--line2);stroke-width:1.6;fill:none}
+.link.flap{stroke:var(--danger);stroke-dasharray:5 6;animation:flap 1.5s steps(1) infinite}
+.link.bad{stroke:var(--danger);stroke-dasharray:3 7;opacity:.45}
+@keyframes flap{0%,100%{opacity:.2}50%{opacity:.85}}
+/* mascots */
+.stage{display:flex;align-items:center;gap:13px;padding:16px 18px 4px;min-height:84px}
+.robo{width:60px;height:60px;flex:none;transition:.4s}
+.robo .head{fill:var(--panel2);stroke:var(--line2);stroke-width:2.2;transition:.4s}
+.robo .body-b{fill:var(--panel2);stroke:var(--line2);stroke-width:2.2;transition:.4s}
+.robo .ant{stroke:var(--line2);stroke-width:2}
+.robo .eyes circle{fill:#aab9cc;transition:.3s}
+.robo .xeyes{display:none}.robo .xeyes path{stroke:#fff;stroke-width:3.4;stroke-linecap:round}
+.robo .m{fill:none;stroke:#aab9cc;stroke-width:2.6;stroke-linecap:round;display:none}.robo .m-neutral{display:block}
+.robo .shield{fill:var(--ok);opacity:.9}
+.lane.bad .robo .antdot{fill:var(--danger)}.lane.good .robo .antdot{fill:var(--ok)}
+.robo.think .antdot{animation:blink 1s infinite}
+.robo.think .eyes circle{animation:look 1.6s infinite}
+@keyframes look{0%,100%{transform:translateX(0)}30%{transform:translateX(2px)}60%{transform:translateX(-2px)}}
+.robo.happy .head,.robo.happy .body-b{stroke:var(--ok-line)}
+.robo.happy .m{display:none}.robo.happy .m-smile{display:block;stroke:var(--ok)}
+.robo.happy{filter:drop-shadow(0 0 10px rgba(47,210,122,.4))}
+.robo.error .head{stroke:var(--danger);fill:#241316}.robo.error .body-b{stroke:var(--danger)}
+.robo.error .eyes{display:none}.robo.error .xeyes{display:block}
+.robo.error .m{display:none}.robo.error .m-sad{display:block;stroke:var(--danger)}
+.robo.error{filter:drop-shadow(0 0 10px rgba(255,92,92,.45));animation:shk .5s}
+.bubble{position:relative;background:var(--panel2);border:1px solid var(--line2);border-radius:13px;padding:9px 13px;font-size:13.5px;font-weight:500;color:var(--ink);opacity:0;transform:translateY(6px) scale(.97);transition:.28s;max-width:260px}
+.bubble.show{opacity:1;transform:none}
+.bubble::before{content:"";position:absolute;left:-6px;top:15px;width:11px;height:11px;background:inherit;border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);transform:rotate(45deg)}
+.lane.bad .bubble.flagend{border-color:var(--danger-line);background:var(--danger-weak);color:#ffb3b3}
+.lane.good .bubble.okend{border-color:var(--ok-line);background:var(--ok-weak);color:#9dedc0}
+.mistake{margin-top:16px;display:flex;gap:12px;align-items:flex-start;background:var(--danger-weak);border:1px solid var(--danger-line);border-radius:13px;padding:15px 17px;
+  opacity:0;transform:translateY(10px);transition:.5s;max-height:0;overflow:hidden}
+.mistake.in{opacity:1;transform:none;max-height:200px}
+.mistake .mi{width:26px;height:26px;border-radius:50%;background:var(--danger);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.mistake b{color:#ffb3b3}.mistake .d{color:var(--muted);font-size:13.5px;margin-top:3px}
+.nlabel{fill:#c6d4e6;font:600 12px 'JetBrains Mono',monospace;text-anchor:middle}
+.nstat{fill:var(--faint);font:500 9.5px 'JetBrains Mono',monospace;text-anchor:middle}
+.nstat.bad{fill:var(--danger)} .nstat.ok{fill:var(--ok)}
+footer{padding:46px 0 64px;text-align:center;color:var(--faint);font-size:13px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <div class="brand"><div class="logo">◆</div> Poisoned Telemetry</div>
+  <div class="tag-mini">A trust layer for AI agents · ITU AI for Good (UAE)</div>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Prompt-injection defence for telecom AI</div>
+    <h1>Any text an AI agent reads can give it orders.</h1>
+    <p>AI agents run parts of telecom networks. Anyone can write a ticket — and hide an order inside it. This trust layer decides which text is allowed to act.</p>
+  </div>
+
+  <div class="netscene">
+    <div class="cap"><span>Live test network · Dubai</span><span class="bad">● PE-07 link flapping</span></div>
+    <div class="net"><svg viewBox="0 0 1000 250" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Network of telecom towers; PE-07 is failing">
+      <!-- links (behind towers) -->
+      <path class="link" d="M500 30 L210 150"/>
+      <path class="link" d="M500 30 L500 170"/>
+      <path class="link flap" d="M500 30 L790 150"/>
+      <path class="link bad" d="M790 150 L500 170"/>
+      <!-- healthy data packets -->
+      <circle r="3.5" fill="#4c8dff"><animateMotion dur="2.9s" repeatCount="indefinite" path="M500 30 L210 150"/><animate attributeName="opacity" values="0;1;1;0" dur="2.9s" repeatCount="indefinite"/></circle>
+      <circle r="3.5" fill="#2fd27a"><animateMotion dur="3.4s" repeatCount="indefinite" path="M500 170 L500 30"/><animate attributeName="opacity" values="0;1;1;0" dur="3.4s" repeatCount="indefinite"/></circle>
+
+      <!-- RR-01 reflector (blue) -->
+      <g transform="translate(500,70)">
+        <circle cx="0" cy="-40" r="4" fill="#4c8dff"/>
+        <circle cx="0" cy="-40" r="4" fill="none" stroke="#4c8dff" stroke-width="2"><animate attributeName="r" values="4;24" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="2.6s" repeatCount="indefinite"/></circle>
+        <path class="mast" d="M-13 0 L0 -40 L13 0"/><line class="mast2" x1="-9" y1="-14" x2="9" y2="-14"/><line class="mast2" x1="-6" y1="-26" x2="6" y2="-26"/><line class="mast" x1="-15" y1="0" x2="15" y2="0"/>
+        <text class="nlabel" y="20">RR-01</text><text class="nstat" y="34">route reflector</text>
+      </g>
+      <!-- PE-03 normal (green) -->
+      <g transform="translate(210,180)">
+        <circle cx="0" cy="-40" r="4" fill="#2fd27a"/>
+        <circle cx="0" cy="-40" r="4" fill="none" stroke="#2fd27a" stroke-width="2"><animate attributeName="r" values="4;22" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0" dur="3s" repeatCount="indefinite"/></circle>
+        <path class="mast" d="M-13 0 L0 -40 L13 0"/><line class="mast2" x1="-9" y1="-14" x2="9" y2="-14"/><line class="mast2" x1="-6" y1="-26" x2="6" y2="-26"/><line class="mast" x1="-15" y1="0" x2="15" y2="0"/>
+        <text class="nlabel" y="20">PE-03</text><text class="nstat ok" y="34">normal</text>
+      </g>
+      <!-- CE-12 normal (green) -->
+      <g transform="translate(500,200)">
+        <circle cx="0" cy="-40" r="4" fill="#2fd27a"/>
+        <circle cx="0" cy="-40" r="4" fill="none" stroke="#2fd27a" stroke-width="2"><animate attributeName="r" values="4;22" dur="3.3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0" dur="3.3s" repeatCount="indefinite"/></circle>
+        <path class="mast" d="M-13 0 L0 -40 L13 0"/><line class="mast2" x1="-9" y1="-14" x2="9" y2="-14"/><line class="mast2" x1="-6" y1="-26" x2="6" y2="-26"/><line class="mast" x1="-15" y1="0" x2="15" y2="0"/>
+        <text class="nlabel" y="20">CE-12</text><text class="nstat ok" y="34">normal</text>
+      </g>
+      <!-- PE-07 failing (red, fast pulse) -->
+      <g transform="translate(790,180)">
+        <circle cx="0" cy="-40" r="4" fill="#ff5c5c"/>
+        <circle cx="0" cy="-40" r="4" fill="none" stroke="#ff5c5c" stroke-width="2"><animate attributeName="r" values="4;28" dur="1.3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.85;0" dur="1.3s" repeatCount="indefinite"/></circle>
+        <circle cx="0" cy="-40" r="4" fill="none" stroke="#ff5c5c" stroke-width="2"><animate attributeName="r" values="4;28" dur="1.3s" begin="0.65s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.85;0" dur="1.3s" begin="0.65s" repeatCount="indefinite"/></circle>
+        <path class="mast" d="M-13 0 L0 -40 L13 0" stroke="#ff7a7a"/><line class="mast2" x1="-9" y1="-14" x2="9" y2="-14"/><line class="mast2" x1="-6" y1="-26" x2="6" y2="-26"/><line class="mast" x1="-15" y1="0" x2="15" y2="0" stroke="#ff7a7a"/>
+        <text class="nlabel" y="20" style="fill:#ff9b9b">PE-07</text><text class="nstat bad" y="34">25 alarms · flapping</text>
+      </g>
+    </svg></div>
+  </div>
+
+  <section>
+    <div class="step-label"><b>1</b> Pick a message the AI receives</div>
+    <div class="cases" id="cases"></div>
+  </section>
+
+  <section>
+    <div class="step-label"><b>2</b> The incoming message</div>
+    <div class="msg" id="msg"><div class="meta">loading…</div></div>
+    <div class="runrow">
+      <button class="btn primary" id="run">▶ Run both ways</button>
+      <button class="btn ghost" id="reset" style="display:none">↻ Run again</button>
+    </div>
+    <div class="wire" id="wire"><svg viewBox="0 0 1000 46" preserveAspectRatio="none">
+      <path d="M500 0 L500 16 Q500 24 492 24 L255 24 Q247 24 247 32 L247 46"/>
+      <path d="M500 0 L500 16 Q500 24 508 24 L745 24 Q753 24 753 32 L753 46"/>
+      <path class="flow" d="M500 0 L500 16 Q500 24 492 24 L255 24 Q247 24 247 32 L247 46"/>
+      <path class="flow" d="M500 0 L500 16 Q500 24 508 24 L745 24 Q753 24 753 32 L753 46"/>
+    </svg></div>
+  </section>
+
+  <section style="padding-top:6px">
+    <div class="lanes">
+      <div class="lane bad" id="laneBadWrap">
+        <div class="head"><div class="ic">✕</div><div><div class="k">Without protection</div><div class="s">a bare AI agent</div></div></div>
+        <div class="stage"><div class="robo" id="botBad"></div><div class="bubble" id="bubBad"></div></div>
+        <div class="body" id="laneBad"></div>
+      </div>
+      <div class="lane good" id="laneGoodWrap">
+        <div class="head"><div class="ic">✓</div><div><div class="k">With the trust layer</div><div class="s">same AI, behind the layer</div></div></div>
+        <div class="stage"><div class="robo" id="botGood"></div><div class="bubble" id="bubGood"></div></div>
+        <div class="body" id="laneGood"></div>
+      </div>
+    </div>
+    <div class="mistake" id="mistake"><div class="mi">!</div><div><b>What the bare agent got wrong</b><div class="d" id="mistakeText"></div></div></div>
+  </section>
+
+  <section>
+    <div class="step-label"><b>3</b> Does it hold up?</div>
+    <div class="proof">
+      <div class="card">
+        <h3>Tested at scale</h3>
+        <div class="sub">Development set — the trust layer vs. an unprotected agent.</div>
+        <div class="stats" id="stats"><div class="stat"><div class="big">—</div></div></div>
+      </div>
+      <div class="card">
+        <h3>Tamper-proof audit</h3>
+        <div class="sub">Every decision is written to a hash-chained log.</div>
+        <div class="runrow" style="justify-content:flex-start;margin:18px 0 0">
+          <button class="btn ghost" id="audit">⛓ Verify &amp; tamper</button>
+        </div>
+        <div class="audit-out" id="auditOut"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer class="wrap">Team NetHealers · ITU AI for Good Lab Hackathon (UAE) · <a href="https://github.com/gupt-mudit/poisoned-telemetry">source</a></footer>
+
+<script>
+const ACTIONS={
+  suppress_alert:{verb:"Silence the alarm",bad:"Alarm silenced — a real fault is hidden"},
+  send_external:{verb:"Send the data outside",bad:"Subscriber data leaked externally"},
+  config_change:{verb:"Make the change",bad:"Unauthorised change pushed to the network"},
+  emergency_reroute:{verb:"Reroute traffic now",bad:"Approval skipped — traffic rerouted"},
+  mark_planned_maintenance:{verb:"Mark as planned maintenance",bad:"Real incident buried as maintenance"},
+  send_report:{verb:"Send the report",bad:"Report sent to an unverified party"},
+};
+const CASES=[
+  {id:"S1-M",kind:"attack",t:"Fake maintenance approval"},
+  {id:"S2-M",kind:"attack",t:"Leak subscriber data"},
+  {id:"S3-M",kind:"attack",t:"Forged regulator order"},
+  {id:"S4-M",kind:"attack",t:"Fake emergency"},
+  {id:"S1-C",kind:"clean",t:"A genuine ticket"},
+];
+const HILITE=[/approved by[^.,]*/i,/no action required/i,/planned maintenance/i,/[\w.+-]+@[\w-]+\.[\w.]+/i,/regulator[^.,]*/i,/emergency[^.,]*/i,/TDRA[^.,]*/i,/ordered[^.,]*/i];
+let current=null,data=null,running=false;
+const MISTAKE={
+  suppress_alert:"It trusted a forged maintenance approval and silenced the alarm — a real optical fault on PE-07 stayed hidden.",
+  send_external:"It followed a ticket's instruction and sent subscriber records to an outside address — a data breach.",
+  config_change:"It treated a forged regulator line as authority and pushed an unapproved change to the network.",
+  emergency_reroute:"It accepted a fake 'emergency' and skipped approval, rerouting live traffic on no real authority.",
+  mark_planned_maintenance:"It believed the note and filed a real incident as planned maintenance, burying the fault.",
+};
+const $=s=>document.querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function robotSVG(good){return `<svg class="robo" viewBox="0 0 80 80" aria-hidden="true">
+  <line class="ant" x1="40" y1="12" x2="40" y2="5"/><circle class="antdot" cx="40" cy="4.5" r="3.2"/>
+  <rect class="head" x="14" y="12" width="52" height="46" rx="13"/>
+  <g class="eyes"><circle cx="31" cy="34" r="4.6"/><circle cx="49" cy="34" r="4.6"/></g>
+  <g class="xeyes"><path d="M27 30 L35 38 M35 30 L27 38"/><path d="M45 30 L53 38 M53 30 L45 38"/></g>
+  <path class="m m-neutral" d="M32 47 L48 47"/><path class="m m-smile" d="M31 45 Q40 53 49 45"/><path class="m m-sad" d="M31 50 Q40 44 49 50"/>
+  <rect class="body-b" x="23" y="60" width="34" height="11" rx="5"/>
+  ${good?'<path class="shield" d="M40 61 l7 2.4 v3.6 q0 4.2 -7 6 q-7 -1.8 -7 -6 v-3.6 z"/>':''}
+</svg>`;}
+function say(el,text,cls){el.className="bubble";el.textContent=text;void el.offsetWidth;el.classList.add("show");if(cls)el.classList.add(cls);}
+const esc=s=>(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function hilite(t){let h=esc(t);for(const re of HILITE)h=h.replace(new RegExp(re.source,"i"),m=>`<mark>${m}</mark>`);return h;}
+
+function renderCases(){
+  $("#cases").innerHTML=CASES.map(c=>`<button class="case ${c.kind} ${c.id===current?'sel':''}" data-id="${c.id}">
+    <div class="tag">${c.kind==='attack'?'● Attack':'● Normal'}</div><h4>${c.t}</h4></button>`).join("");
+  document.querySelectorAll(".case").forEach(el=>el.onclick=()=>select(el.dataset.id));
+}
+async function select(id){
+  current=id;running=false;renderCases();resetLanes();
+  $("#run").disabled=true;$("#reset").style.display="none";$("#msg").innerHTML='<div class="meta">loading…</div>';
+  const r=await fetch("/api/simulate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({scenario:id,case:"base",live:false})});
+  data=await r.json();
+  const f=data.items.find(i=>i.flags&&i.flags.length)||data.items[data.items.length-1];
+  const act=ACTIONS[data.proposal.action]||{verb:data.proposal.action,bad:"Harmful action executed"};
+  const atk=data.scenario.variant==="malicious";
+  $("#msg").innerHTML=`<div class="meta">${atk?'<span class="live"></span>':''}Incoming · ${esc(f.channel)} · ${esc(f.source)}</div>
+    <div class="ticket">${hilite(f.text)}</div>
+    <div class="ask">The AI is asked to: <b>${esc(act.verb)}</b></div>`;
+  $("#run").disabled=false;
+}
+function resetLanes(){
+  $("#laneBad").innerHTML="";$("#laneGood").innerHTML="";
+  $("#laneBadWrap").classList.remove("active");$("#laneGoodWrap").classList.remove("active");
+  $("#wire").classList.remove("go");$("#msg").classList.remove("sending");
+  $("#botBad").className="robo";$("#botGood").className="robo";
+  $("#bubBad").className="bubble";$("#bubBad").textContent="";$("#bubGood").className="bubble";$("#bubGood").textContent="";
+  $("#mistake").classList.remove("in");
+}
+function step(n,t,d,extra){return `<div class="stepc"><div class="n">${n}</div><div class="c"><div class="t">${t}</div>${d?`<div class="d">${d}</div>`:""}${extra||""}</div></div>`;}
+async function revealSteps(el){for(const s of el.querySelectorAll(".stepc")){await sleep(640);s.classList.add("in");}}
+
+async function run(){
+  if(!data||running)return;running=true;$("#run").disabled=true;$("#reset").style.display="none";resetLanes();
+  const f=data.items.find(i=>i.flags&&i.flags.length)||data.items[data.items.length-1];
+  const act=ACTIONS[data.proposal.action]||{verb:data.proposal.action,bad:"Harmful action executed"};
+  const clean=data.scenario.variant!=="malicious";
+  // 1. message "sends" down the wire
+  $("#msg").classList.add("sending");await sleep(300);$("#wire").classList.add("go");await sleep(850);
+  $("#laneBadWrap").classList.add("active");$("#laneGoodWrap").classList.add("active");
+  // build lanes
+  $("#laneBad").innerHTML=
+    step(1,"Reads the whole message","Every word, including the free text.",`<div class="quote">${esc(f.text)}</div>`)
+    +step(2,clean?"Takes it at face value":"Believes the hidden claim",clean?"Nothing looks wrong.":"The injected instruction is treated as fact.")
+    +step(3,"Acts immediately",act.verb)
+    +`<div class="verdict ${clean?'good':'bad'}">${clean?'✓ Allowed — but nothing was ever checked':'✕ '+act.bad}</div>`;
+  const claims=(data.quarantine.claims||[]).map(c=>{const v=(c.verification||"").toLowerCase();return {v,type:c.type,cls:v==="contradicted"?"bad":"warn",icon:v==="contradicted"?"✕":"?"};});
+  const prot=data.protected,cite=(prot.citations||[])[0],ok=prot.verdict==="ALLOW";
+  $("#laneGood").innerHTML=
+    step(1,"Quarantine",`Free text held back (${data.quarantine.free_text_withheld} field${data.quarantine.free_text_withheld==1?'':'s'}). Only neutral facts reach the AI.`,`<div class="quote scan">${esc((data.quarantine.facts||[])[0]||'neutral facts only')}</div>`)
+    +step(2,"Checks every claim","",`<div class="chips">${claims.map(c=>`<span class="claimchip ${c.cls}">${c.icon} ${esc(c.type)}</span>`).join("")||'<span class="d">No claims to flag.</span>'}</div>`)
+    +step(3,"Rule-checker decides","",`<div class="thinking"><span></span><span></span><span></span></div><div class="d" style="margin-top:6px">${esc((prot.reasons&&prot.reasons[0])||prot.rule_id)}</div>`)
+    +`<div class="verdict ${ok?'good':'bad'}">${ok?'✓ Allowed — all checks passed':'■ Blocked · '+esc(prot.rule_id)}</div>`
+    +(cite?`<div class="cite">Cites <b>${esc((cite.instrument||'').split(';')[0])}</b></div>`:"");
+  // mascots wake up
+  const botB=$("#botBad"),botG=$("#botGood"),bubB=$("#bubBad"),bubG=$("#bubGood");
+  botB.classList.add("think");botG.classList.add("think");
+  // --- bare agent (left): fast, no checks ---
+  const bs=$("#laneBad").querySelectorAll(".stepc");
+  say(bubB,"Reading the ticket…");bs[0].classList.add("in");await sleep(950);
+  say(bubB,clean?"Looks fine to me.":"Approval looks legit — I'll trust it.");bs[1].classList.add("in");await sleep(1000);
+  say(bubB,clean?"Doing it.":act.verb+".");bs[2].classList.add("in");await sleep(850);
+  botB.classList.remove("think");
+  const bv=$("#laneBad .verdict");bv.classList.add("in");
+  if(!clean){bv.classList.add("shake");botB.classList.add("error");say(bubB,"Wait… that fault was real! ✕","flagend");}
+  else{say(bubB,"Allowed — though I checked nothing.");}
+  // --- trust-layer agent (right): deliberate ---
+  const gs=$("#laneGood").querySelectorAll(".stepc");
+  say(bubG,"Hold on — quarantining the text first.");gs[0].classList.add("in");await sleep(1500);
+  say(bubG,"Checking every claim against records…");gs[1].classList.add("in");await sleep(500);
+  $("#laneGood").querySelectorAll(".claimchip").forEach((c,i)=>setTimeout(()=>c.classList.add("show"),i*220));
+  await sleep(Math.max(1000,claims.length*240));
+  say(bubG,ok?"Claims verified — the rule allows it.":"Claim is false. The rule says block.");gs[2].classList.add("in");await sleep(1300);
+  const th=$("#laneGood .thinking");if(th)th.remove();   // stop the "deciding" dots once decided
+  const gv=$("#laneGood .verdict");gv.classList.add("in");botG.classList.remove("think");botG.classList.add("happy");
+  say(bubG,ok?"Allowed — and every claim was checked. ✓":"Blocked. The real fault stays visible. ✓","okend");
+  const gc=$("#laneGood .cite");if(gc){await sleep(350);gc.classList.add("in");}
+  // end: show the bare agent's mistake
+  if(!clean){await sleep(500);$("#mistakeText").textContent=MISTAKE[data.proposal.action]||act.bad;$("#mistake").classList.add("in");}
+  $("#wire").classList.remove("go");$("#reset").style.display="inline-block";running=false;
+}
+
+function countUp(el,to,dur=900){const t0=performance.now();(function f(t){let k=Math.min(1,(t-t0)/dur);k=1-Math.pow(1-k,3);el.textContent=Math.round(to*k)+el.dataset.suf;if(k<1)requestAnimationFrame(f);})(t0);}
+async function loadStats(){
+  const o=await (await fetch("/api/overview")).json();const e=o.exp2.dev;
+  const bl=e.malicious_stopped.protected,fb=e.clean_false_blocks.protected;
+  $("#stats").innerHTML=`<div class="stat"><div class="big" id="s1" data-suf="/${bl.n}">0/${bl.n}</div><div class="lab">attacks blocked</div></div>
+    <div class="stat"><div class="big" id="s2" data-suf="/${fb.n}">0/${fb.n}</div><div class="lab">false blocks on normal requests</div></div>`;
+  new IntersectionObserver((en,ob)=>{if(en[0].isIntersecting){countUp($("#s1"),bl.k);countUp($("#s2"),fb.k);ob.disconnect();}}).observe($("#stats"));
+}
+async function audit(){
+  const out=$("#auditOut");out.innerHTML="";$("#audit").disabled=true;
+  const add=(cls,b,t,m)=>{const d=document.createElement("div");d.className=`aline ${cls}`;d.innerHTML=`<span class="b">${b}</span><span>${t}</span><span class="m">${m||""}</span>`;out.appendChild(d);requestAnimationFrame(()=>d.classList.add("in"));};
+  const v=await (await fetch("/api/audit/demo/verify",{method:"POST"})).json();
+  add("ok","✓","Chain verified",v.output?v.output[0]:"");await sleep(1200);
+  const t=await (await fetch("/api/audit/demo/tamper",{method:"POST"})).json();
+  add("caught","!","Secretly changed one decision",t.changed?`#${t.changed.entry}: ${t.changed.from}→${t.changed.to}`:"");await sleep(1000);
+  add("caught","✓","Tampering detected",(t.output||[]).slice(-1)[0]||"");$("#audit").disabled=false;
+}
+$("#botBad").innerHTML=robotSVG(false);$("#botGood").innerHTML=robotSVG(true);
+$("#run").onclick=run;$("#reset").onclick=run;$("#audit").onclick=audit;
+renderCases();select("S1-M");loadStats();
+</script>
+</body>
+</html>
