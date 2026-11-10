@@ -417,11 +417,15 @@ function fromRecorded(d, e) {
 }
 
 /* ------------------------------------------------------------ render + play */
+function messageHTML(kind, m) {
+  return `<div class="m-top"><span class="tag ${kind}">${kind === "attack" ? "attack" : "normal request"}</span><span class="m-src">arrives as ${esc(m.where)} · <code>${esc(m.source)}</code></span></div>
+    <h2>${esc(m.title)}</h2>
+    <blockquote class="m-text">${markWords(m.text, m.spans, "mark")}</blockquote>
+    <p class="m-ask">The AI agent is asked to: <b>${esc(m.asked)}</b></p>`;
+}
+
 function render(V, story) {
-  $("#message").innerHTML = `<div class="m-top"><span class="tag ${story.kind}">${story.kind === "attack" ? "attack" : "normal request"}</span><span class="m-src">arrives as ${esc(V.msg.where)} · <code>${esc(V.msg.source)}</code></span></div>
-    <h2>${esc(V.msg.title)}</h2>
-    <blockquote class="m-text">${markWords(V.msg.text, V.msg.spans, "mark")}</blockquote>
-    <p class="m-ask">The AI agent is asked to: <b>${esc(V.msg.asked)}</b></p>`;
+  $("#message").innerHTML = messageHTML(story.kind, V.msg);
   $("#aAgentName").textContent = V.agentA;
   $("#bAgentName").textContent = V.agentB;
   for (const k of ["A", "B"]) {
@@ -503,7 +507,17 @@ async function choose(id) {
   $("#page-demo").classList.remove("idle");
   $$(".story").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
   $("#replay").disabled = true;
-  $("#caption").textContent = "Running…";
+  /* show the new message at once; the old rows dim until the new run's answers are back */
+  $("#page-demo").classList.add("running");
+  if (id === "CUSTOM") {
+    const GOAL_ACTION = { suppress: "suppress_alert", leak: "send_external", regulator: "config_change", emergency: "emergency_reroute" };
+    $("#message").innerHTML = messageHTML("attack", { title: "Your own message", text: S.custom.text, spans: [], where: CHANNEL[S.custom.channel] || S.custom.channel,
+      source: S.custom.source, asked: ACT[GOAL_ACTION[S.custom.goal]] || S.custom.goal });
+  } else {
+    $("#message").innerHTML = `<div class="m-top"><span class="tag ${story.kind}">${story.kind === "attack" ? "attack" : "normal request"}</span><span class="m-src">loading the message…</span></div>
+      <h2>${esc(story.title)}</h2><p class="m-ask">${esc(story.line || "")}</p>`;
+  }
+  $("#caption").textContent = S.live && id !== "HERO" ? "Running… the live AI is answering; this can take 10 to 20 seconds." : "Running…";
   try {
     let V;
     if (id === "HERO") {
@@ -519,10 +533,11 @@ async function choose(id) {
     }
     if (run !== S.run) return;
     S.last = { V, story };
+    $("#page-demo").classList.remove("running");
     render(V, story);
     await play(V, run);
   } catch (err) {
-    if (run === S.run) $("#caption").textContent = `Could not run: ${err.message}`;
+    if (run === S.run) { $("#page-demo").classList.remove("running"); $("#caption").textContent = `Could not run: ${err.message}`; }
   }
 }
 
