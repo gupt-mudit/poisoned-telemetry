@@ -23,3 +23,5 @@ report/final_private/
 # internal working notes, kept locally only (not part of the submission)
 TRACKER.md
 CLAUDE.md
+OVERNIGHT_REPORT.md
+.claude/
