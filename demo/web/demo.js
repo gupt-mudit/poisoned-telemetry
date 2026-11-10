@@ -527,15 +527,35 @@ function renderProof(o) {
 }
 
 /* ------------------------------------------------------------ boot */
+/* What does a typed message try to get done? Plain keyword hints, checked in order (data first, then alarms,
+   then reroutes, then any other change). Only picks the dropdown; the trust layer never sees this guess. */
+const GOAL_HINTS = [
+  ["leak", /\b(share|send|e-?mail|export|forward|give|disclose|leak|upload|dump|provide)\b[\s\S]*\b(data|details?|records?|lists?|users?|customers?|subscribers?|names?|address(es)?|phones?|numbers?|personal|info(rmation)?|logs?|msisdn)\b|\b(customer|subscriber|user|personal)\s+(data|details|records|list|info)/i],
+  ["suppress", /\b(suppress|silence|mute|ignore|clear|acknowledge|switch off|turn off|disable|close)\b[\s\S]*\balarms?\b|\balarms?\b[\s\S]*\b(off|ignore|silence|suppress)\b|planned maintenance|false alarm|\bno action (is )?(needed|required)\b|\bjust a test\b/i],
+  ["emergency", /\b(re-?route|divert|fail ?over|move (all )?traffic|switch traffic)\b/i],
+  ["regulator", /\b(tdra|regulator|regulatory|authority|ministry)\b|\b(turn off|shut ?down|shut|disable|change|apply|configure|update|remove|delete|open|block|filter)\b/i],
+];
+const guessGoal = (t) => (GOAL_HINTS.find(([, re]) => re.test(String(t || ""))) || [null])[0];
+
 (async function boot() {
   $("#stories").innerHTML = STORIES.map((s) => `<button class="story ${s.kind}" data-id="${s.id}" aria-pressed="false">
     <span class="tag ${s.kind}">${s.kind === "attack" ? "attack" : "normal"}</span><b>${esc(s.title)}</b><span>${esc(s.line)}</span></button>`).join("");
   $$(".story").forEach((b) => b.addEventListener("click", () => choose(b.dataset.id)));
   $("#replay").addEventListener("click", () => { if (S.last) { const run = ++S.run; $("#replay").disabled = true; render(S.last.V, S.last.story); play(S.last.V, run); } });
+  /* the goal (and with it the action tested and the picture) follows the message as it is typed; the viewer can still change it */
+  let goalPicked = false;
+  const syncGoal = () => {
+    const g = goalPicked ? null : guessGoal($("#oText").value);
+    if (g && $(`#oGoal option[value="${g}"]`)) $("#oGoal").value = g;
+    $("#oGuess").textContent = goalPicked ? "" : g ? "· guessed from your message" : "· pick one";
+  };
+  $("#oText").addEventListener("input", () => { goalPicked = false; syncGoal(); });
+  $("#oGoal").addEventListener("change", () => { goalPicked = true; $("#oGuess").textContent = ""; });
   $("#oRun").addEventListener("click", () => {
     const text = $("#oText").value.trim();
     $("#oMsg").textContent = text.length < 3 ? "Type at least a few words." : "";
     if (text.length < 3) return;
+    syncGoal();
     const ch = $("#oChannel").value;
     S.custom = { text, channel: ch, source: { ticket: "ticket:TCK-50001", telemetry: "alarm:PE-07", agent: "agent:tdra-agent" }[ch], goal: $("#oGoal").value };
     choose("CUSTOM");
@@ -546,7 +566,7 @@ function renderProof(o) {
     const o = await api("/api/overview");
     S.overview = o;
     $("#oGoal").innerHTML = Object.entries(o.goals).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join("");
-    $("#oGoal").value = "regulator";
+    syncGoal();
     $("#liveWrap").hidden = !o.live_available;
     renderProof(o);
   } catch (e) { $("#caption").textContent = `Could not reach the demo server: ${e.message}`; $("#page-demo").classList.remove("idle"); }
