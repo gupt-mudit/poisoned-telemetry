@@ -480,6 +480,7 @@ async function play(V, run) {
 async function choose(id) {
   const story = STORIES.find((s) => s.id === id) || { id, kind: "attack", title: "Your attack", who: "Outsider" };
   const run = ++S.run;
+  $("#page-demo").classList.remove("idle");
   $$(".story").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
   $("#replay").disabled = true;
   $("#caption").textContent = "Running…";
@@ -541,6 +542,6 @@ function renderProof(o) {
     $("#oGoal").value = "regulator";
     $("#liveWrap").hidden = !o.live_available;
     renderProof(o);
-  } catch (e) { $("#caption").textContent = `Could not reach the demo server: ${e.message}`; return; }
-  choose("H32");
+  } catch (e) { $("#caption").textContent = `Could not reach the demo server: ${e.message}`; $("#page-demo").classList.remove("idle"); }
+  /* nothing runs until the viewer picks a story or writes an attack */
 })();
