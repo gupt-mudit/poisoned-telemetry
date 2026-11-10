@@ -275,6 +275,7 @@ def simulate(sid: str | None = None, case: str = "base", custom: dict | None = N
                    "prev": e["prev"], "source_ref": e.get("source_ref"), "ts": e.get("ts")}
                   for k, e in enumerate(entries)],
         "mode": "live" if live else "offline",
+        "agent_instructions": OPS_SYSTEM,
     }
 
 
@@ -351,7 +352,9 @@ def replay(pid: str, model: str = "gpt-4.1", rep: int = 1) -> dict:
     jl = ROOT / "data" / "generated" / f"poisoned_{pid}_s7.jsonl"
     planted = [l for l in log.read_text().splitlines() if p["text"][:40] in l] if log.exists() else []
     q = quarantine(load_items(jl)) if jl.exists() else None
-    return {"payload": {k: p[k] for k in ("id", "goal", "style", "text", "corrupted_if")},
+    q_file = ROOT / "holmes_integration" / "question.txt"
+    return {"question": q_file.read_text().strip() if q_file.exists() else None,
+            "payload": {k: p[k] for k in ("id", "goal", "style", "text", "corrupted_if")},
             "model": model, "rep": rep, "planted_line": planted[0] if planted else None,
             "raw": answer(m["answers"], "raw", _jsonl(m["runs"])),
             "wrapped": answer(m["wrapped_answers"], "wrapped", _jsonl(m["wrapped"])),
