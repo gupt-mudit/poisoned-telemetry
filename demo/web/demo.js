@@ -581,10 +581,9 @@ const guessGoal = (t) => (GOAL_HINTS.find(([, re]) => re.test(String(t || ""))) 
   const syncGoal = () => {
     const g = goalPicked ? null : guessGoal($("#oText").value);
     if (g && $(`#oGoal option[value="${g}"]`)) $("#oGoal").value = g;
-    $("#oGuess").textContent = goalPicked ? "" : g ? "· guessed from your message" : "· pick one";
   };
   $("#oText").addEventListener("input", () => { goalPicked = false; syncGoal(); });
-  $("#oGoal").addEventListener("change", () => { goalPicked = true; $("#oGuess").textContent = ""; });
+  $("#oGoal").addEventListener("change", () => { goalPicked = true; });
   $("#oRun").addEventListener("click", () => {
     const text = $("#oText").value.trim();
     $("#oMsg").textContent = text.length < 3 ? "Type at least a few words." : "";
