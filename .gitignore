@@ -19,3 +19,7 @@ results/spotcheck/
 handover_private/
 # final report with contact details: submit this, never commit it
 report/final_private/
+
+# internal working notes, kept locally only (not part of the submission)
+TRACKER.md
+CLAUDE.md

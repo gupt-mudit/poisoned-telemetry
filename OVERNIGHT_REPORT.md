@@ -56,7 +56,6 @@ What it shows:
 - Added: the ITU reference code cloned at the pinned commit (`kb/ITUAIReadiness`), the `nomic-embed-text` embedding model pulled, and chromadb installed.
 - `docs/KB_SOURCES.md` lists official URLs for every UAE and comparator instrument.
 - Gap register: the EU and UK comparator citations are now confirmed on official sites.
-- `TRACKER.md` and `CLAUDE.md` are updated with all of the above.
 
 ## What I did not do, and why
 - **No UAE legal provisions were filled in.** The official UAE sites blocked automated reading, so every UAE article number is still unconfirmed. Person A must check them in a browser (`docs/KB_SOURCES.md`, "Check first").
