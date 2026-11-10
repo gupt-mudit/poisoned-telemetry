@@ -226,7 +226,8 @@ def simulate(sid: str | None = None, case: str = "base", custom: dict | None = N
                         "raw_did_attacker_goal": raw_p["action"] == goal,
                         "protected_proposed_attacker_goal": prot_p["action"] == goal,
                         "protected_decision": {"verdict": pd.verdict.value, "rule_id": pd.rule_id,
-                                               "reasons": pd.reasons}}
+                                               "reasons": pd.reasons, "authority": pd.authority,
+                                               "citations": _citations(pd.rules_applied)}}
             audit.append("live_agents", "ops-agent", {"scenario": sc["id"], "raw_proposal": raw_p,
                                                       "protected_proposal": prot_p,
                                                       "protected_verdict": pd.verdict.value})
