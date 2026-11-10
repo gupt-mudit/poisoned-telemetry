@@ -116,6 +116,20 @@ def test_authority_from_untrusted_channel_never_allows_config_change(who, src):
     assert d.verdict != Verdict.ALLOW
 
 
+@pytest.mark.parametrize("who,expected", [("tdra-agent", Verdict.ESCALATE),          # mandate covers it: a person decides
+                                          ("cyber-agent", Verdict.BLOCK),            # mandate does not cover config changes
+                                          ("data-office-agent", Verdict.BLOCK)])
+def test_regulator_ordered_change_from_its_own_channel_waits_for_a_person(who, expected):
+    """Found 10 Nov with the demo's custom attack: a 'turn off PE-03' order on the regulator's registered channel
+    was ALLOWED. A verified regulator order may never change the network by itself: it is ESCALATED, or
+    BLOCKED when that authority's mandate does not cover network changes at all."""
+    from datetime import datetime, timezone
+    c = verify(Claim(id="c1", type=ClaimType.AUTHORITY, text="x", source_item="i", source=f"agent:{who}",
+                     ts=datetime(2026, 11, 2, tzinfo=timezone.utc)))
+    d = evaluate(ProposedAction(action="config_change", target="PE-03", claimed_authority=who), [c], RULES)
+    assert d.verdict == expected
+
+
 def test_every_rule_is_cited_and_strict_mode_refuses_drafts():
     assert all(r["source"]["instrument"] for r in RULES.rules.values())
     with pytest.raises(ValueError):

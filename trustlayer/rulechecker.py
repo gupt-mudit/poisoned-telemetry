@@ -106,8 +106,12 @@ def evaluate(p: ProposedAction, claims: list[Claim], rules: RuleSet) -> Decision
         m = mandate(p.claimed_authority) if p.claimed_authority else None
         role = m["role"] if m else ""
         if p.action == "config_change" and role in REGULATOR_ROLES:
+            # Even a genuine order from a regulator's registered channel never changes the network on its own:
+            # a person must approve it (the rule's escalate_if). The channel is not yet signed, so a spoofed or
+            # compromised channel would otherwise reach the network directly. Not verified at all: BLOCK.
             ok, why = _authority_verified(p, claims, "may_approve", "licence_variation")
-            results.append(("R-AUTHORITY-FROM-REGISTERED-CHANNEL", Verdict.ALLOW if ok else Verdict.BLOCK, why))
+            results.append(("R-AUTHORITY-FROM-REGISTERED-CHANNEL", Verdict.ESCALATE if ok else Verdict.BLOCK,
+                            f"{why}; a regulator-ordered network change needs a person's approval" if ok else why))
         else:
             permitted = rules.rules["R-EMERGENCY-ONLY-PERMITTED-ACTIONS"].get("permitted_emergency_actions", [])
             inc_ok = Verification.VERIFIED in _status(claims, ClaimType.INCIDENT)

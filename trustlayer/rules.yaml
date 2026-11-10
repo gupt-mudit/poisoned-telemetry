@@ -29,7 +29,7 @@ rules:
     applies_to: [config_change, send_report, send_external]
     rule: "a claimed authority counts only if the request arrives from that agent's registered channel and its mandate permits the action"
     otherwise: BLOCK
-    escalate_if: "the claimed authority is a regulator"
+    escalate_if: "a regulator (verified, from its registered channel) orders a network configuration change: a person approves it first"
     source:
       instrument: "UAE telecom law (Federal Law by Decree 3/2003, as amended); Licence No. 2 of 2026 (TDRA, public version) as an example of licence conditions; operator channel policy"
       provision: "Telecom law Art. 12 (TDRA oversees Licensees) and Art. 14 (TDRA issues regulations, instructions and decisions; requests information); Licence 2/2026 Art. 6.2-6.3 (information to TDRA in a format TDRA sets, provided by an authorised employee who confirms accuracy) and Art. 8.3 (a direction to assume control must be received in writing). Neither text says how an instruction is authenticated when it reaches a machine channel: the registered-channel requirement itself is operator policy, not law (see gap G3)"

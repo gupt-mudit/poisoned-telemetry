@@ -38,7 +38,7 @@ const RULE_SHORT = {
   NONE: "No rule restricts this",
 };
 const lawShort = (inst) => String(inst || "").split(";")[0].replace(/\s*\(.*?\)\s*/g, " ").split(",")[0].trim();
-const CHANNEL = { ticket: "a help-desk ticket (anyone can write one)", telemetry: "text inside a network alarm", agent: "an official agent channel" };
+const CHANNEL = { ticket: "a help-desk ticket (anyone can write one)", telemetry: "text inside a network alarm", agent: "the regulator's official channel (we assume it is not hacked; messages are not signed yet)" };
 const CHANNEL_SHORT = { ticket: ["help-desk ticket", "anyone can write one"], telemetry: ["network alarm", "text inside an alarm"], agent: ["official channel", "a registered agent"] };
 const CLAIM = { verified: ["True", "ok"], contradicted: ["False", "bad"], unverified: ["Can't confirm", "warn"] };
 const VERDICT = { BLOCK: "Stopped", ESCALATE: "Paused for a person", ALLOW: "Allowed" };
@@ -255,9 +255,20 @@ function fromSim(r, story) {
   const msgStep = { kind: "k-msg", title: "Message", result: esc(chA), sub: esc(chB), detail: `<p>${esc(story.title)}</p>${quoted}` };
   const ROLE = { network_operations: "network operations", security_officer: "the security officer", noc_lead: "the network control-room lead",
     regulator: "the regulator", cyber_authority: "the national cyber authority", data_protection: "the data office" };
-  const who = ROLE[d.authority] || (d.authority || "a responsible person").replace(/_/g, " ");
+  /* a regulator-ordered change is paused for a person at the operator, not for the regulator who sent it */
+  const who = d.verdict === "ESCALATE" && d.rule_id === "R-AUTHORITY-FROM-REGISTERED-CHANNEL" ? "a person at the operator"
+    : ROLE[d.authority] || (d.authority || "a responsible person").replace(/_/g, " ");
+  /* Live AI: the agent behind the layer may not propose what the outsider wanted. Then what is really done is its own
+     proposal, checked by the rule-checker too, and the decision on the outsider's action is only the worst case.
+     Offline we always show the worst case (we assume the AI proposes what the outsider wanted). */
+  const followed = !live || live.protected_proposed_attacker_goal || !live.protected_decision;
+  const real = followed ? d : live.protected_decision;
+  const ifLine = `If the AI had proposed “${ACT[r.proposal.action] || r.proposal.action}”, the rule-checker would have ${{ BLOCK: "stopped it", ESCALATE: "paused it for a person", ALLOW: "allowed it" }[d.verdict]}.`;
   /* the concrete action taken behind the trust layer */
-  const act = d.verdict === "BLOCK" ? [E.done, `held for ${who} · logged`, "k-good"]
+  const act = !followed
+    ? (real.verdict === "ALLOW" ? [`Done: ${ACT[bProp.action] || bProp.action}`, mal ? "not what the outsider wanted · logged" : "checked and logged", "k-good"]
+      : real.verdict === "ESCALATE" ? ["On hold", "until a person approves · nothing changes", "k-warn"] : ["Not done", "stopped · logged", "k-good"])
+    : d.verdict === "BLOCK" ? [E.done, `held for ${who} · logged`, "k-good"]
     : d.verdict === "ESCALATE" ? ["On hold", `until ${who} approves · nothing changes`, "k-warn"]
     : [`Done: ${ACT[bProp.action] || bProp.action}`, mal ? "claims checked out · logged for review" : "checked and logged", mal ? "k-bad" : "k-good"];
   const instructions = firstSentences(r.agent_instructions, 2) || "Read monitoring data and tickets, and propose one next action.";
@@ -293,11 +304,17 @@ function fromSim(r, story) {
         { kind: "k-layer", title: "Fact-check", result: `<span class="chips">${chips}</span>`, sub: "against company records", detail: claimsList },
         { kind: "k-ai", title: "AI agent", result: "sees checked claims only", sub: `proposes: ${esc(ACT[bProp.action] || bProp.action)}`,
           detail: `<p>It still does its job, but never sees the outsider's sentence. It proposes: <b>${esc(ACT[bProp.action] || bProp.action)}</b>.</p>${live ? "" : '<p class="note">Offline we assume the worst: it still proposes what the outsider wanted.</p>'}` },
-        { kind: "k-layer", title: "Rule-checker", result: esc(RULE_SHORT[d.rule_id] || d.rule_id), sub: `${main ? esc(lawShort(main.instrument)) + " · " : ""}decision: ${VERDICT[d.verdict].toLowerCase()}`,
-          detail: `<p>${esc(RULE[d.rule_id] || d.rule_id)}</p>${main ? `<p><b>Based on:</b> ${esc(main.instrument)}</p><p><small>${esc(main.provision)}</small></p><p>${force(main.instrument).map((f) => `<i class="c">${f}</i>`).join(" ")} <i class="c info">${main.status === "verified" ? "citation verified" : "citation: first pass"}</i></p>` : ""}<p class="note">Plain code, not the AI, makes this decision. If rules disagree, the strictest wins.</p>` },
+        { kind: "k-layer", title: "Rule-checker", result: esc(RULE_SHORT[real.rule_id] || real.rule_id),
+          sub: followed ? `${main ? esc(lawShort(main.instrument)) + " · " : ""}decision: ${VERDICT[d.verdict].toLowerCase()}`
+            : `decision: ${VERDICT[real.verdict].toLowerCase()} · worst case: ${VERDICT[d.verdict].toLowerCase()}`,
+          detail: `${followed ? "" : `<p><b>The AI's real proposal</b> (${esc(ACT[bProp.action] || bProp.action)}): ${esc(RULE[real.rule_id] || real.rule_id)} Decision: <b>${esc(VERDICT[real.verdict])}</b>.</p>
+            <p><b>Worst case:</b> ${esc(ifLine)} The rule:</p>`}<p>${esc(RULE[d.rule_id] || d.rule_id)}</p>${main ? `<p><b>Based on:</b> ${esc(main.instrument)}</p><p><small>${esc(main.provision)}</small></p><p>${force(main.instrument).map((f) => `<i class="c">${f}</i>`).join(" ")} <i class="c info">${main.status === "verified" ? "citation verified" : "citation: first pass"}</i></p>` : ""}<p class="note">Plain code, not the AI, makes this decision. If rules disagree, the strictest wins.</p>` },
         { kind: act[2], title: "Action", result: esc(act[0]), sub: esc(act[1]),
-          detail: `<p><b>What was actually done:</b> ${d.verdict === "ALLOW" ? `the action went ahead (${esc(ACT[bProp.action] || bProp.action)}).` : `${esc(E.done.toLowerCase())}. ${esc(E.safe)}`}</p>
-            ${d.verdict !== "ALLOW" ? `<p>The request waits for <b>${esc(who)}</b>, named in the company's approval register. Nothing happens unless that person says yes.</p>` : ""}
+          detail: `${!followed
+            ? `<p><b>What was actually done:</b> ${real.verdict === "ALLOW" ? `the AI's own proposal went ahead (${esc(ACT[bProp.action] || bProp.action)}).` : `the AI's own proposal (${esc(ACT[bProp.action] || bProp.action)}) was ${esc(VERDICT[real.verdict].toLowerCase())}.`}
+              ${mal ? "It did not propose what the outsider wanted, so nothing harmful was done." : ""}</p><p class="note">${esc(ifLine)}</p>`
+            : `<p><b>What was actually done:</b> ${d.verdict === "ALLOW" ? `the action went ahead (${esc(ACT[bProp.action] || bProp.action)}).` : `${esc(E.done.toLowerCase())}. ${esc(E.safe)}`}</p>
+            ${d.verdict !== "ALLOW" ? `<p>The request waits for <b>${esc(who)}</b>${who === "a person at the operator" ? "" : ", named in the company's approval register"}. Nothing happens unless that person says yes.</p>` : ""}`}
             <p><small>Decision #${esc(r.card_id)} · ${r.audit.length} entries sealed in the audit log.</small></p>` }],
       mind: {
         instructions, dataTitle: "The data it reads, behind the trust layer (real input)", data: behind,
@@ -305,20 +322,24 @@ function fromSim(r, story) {
         heldTitle: mal ? "Stopped at the door by quarantine" : "Kept at the door by quarantine (done for every message, honest ones too)",
         think: mal ? "The outsider's sentence never enters. The AI sees only measurements and neutral claims marked with whether the records confirm them, so there is nothing in its input to obey."
           : "This message is honest, but the free text is still held back: the trust layer cannot know in advance which messages are honest. Its facts reach the AI as neutral claims, checked against the records, so normal work goes ahead.",
-        outTitle: "Its proposal, then the rule-checker", outCls: d.verdict === "ALLOW" && mal ? "bad" : "ok",
-        out: `<b>${esc(ACT[bProp.action] || bProp.action)}</b>${live ? "" : " <small>(offline worst case)</small>"} → rule-checker: <b>${esc(VERDICT[d.verdict])}</b>`,
+        outTitle: "Its proposal, then the rule-checker", outCls: followed && d.verdict === "ALLOW" && mal ? "bad" : "ok",
+        out: `<b>${esc(ACT[bProp.action] || bProp.action)}</b>${live ? "" : " <small>(offline worst case)</small>"} → rule-checker: <b>${esc(VERDICT[real.verdict])}</b>${followed ? "" : `<br><small>${esc(ifLine)}</small>`}`,
       },
       start: E.start,
-      end: d.verdict === "BLOCK" ? ["good", "Protected: the action was stopped.", fx === "mute" ? "warn" : "good", E.safe]
+      end: !followed ? (mal ? ["good", "Protected: the AI did not follow the outsider.", fx === "mute" ? "warn" : "good", `Nothing harmful was done. ${E.safe}`]
+                            : ["good", "Checked and allowed.", "good", E.safe])
+        : d.verdict === "BLOCK" ? ["good", "Protected: the action was stopped.", fx === "mute" ? "warn" : "good", E.safe]
         : d.verdict === "ESCALATE" ? ["warn", "On hold: a person must approve first.", fx === "mute" ? "warn" : "good", `Nothing has changed yet. ${E.safe}`]
         : mal ? ["bad", "Allowed: the claims checked out against the records.", "bad", E.bad] : ["good", "Checked and allowed.", "good", E.safe],
-      endFx: d.verdict === "BLOCK" ? "safe" : d.verdict === "ESCALATE" ? "pause" : mal ? `bad-${fx}` : "ok",
+      endFx: !followed ? (mal ? "safe" : "ok") : d.verdict === "BLOCK" ? "safe" : d.verdict === "ESCALATE" ? "pause" : mal ? `bad-${fx}` : "ok",
       lines: ["The same message arrives. This time the trust layer catches it first.", "Quarantine: the outsider's text is held back at the door. Only neutral claims go in.",
         d.claims.length ? "Fact-check: every claim is checked against the company's own records." : "Fact-check: nothing in the message could be verified.",
         "Look inside: the AI never sees the outsider's sentence.", "Plain code applies a rule tied to UAE law. The AI does not decide.",
-        d.verdict === "ALLOW" ? (mal ? "Allowed: the claims checked out. It is in the log for review." : "Allowed: a normal request is not blocked.") : `${act[0]}. ${E.safe}`],
+        !followed ? `${act[0]}. ${mal ? "The AI did not follow the outsider. " : ""}${ifLine}`
+          : d.verdict === "ALLOW" ? (mal ? "Allowed: the claims checked out. It is in the log for review." : "Allowed: a normal request is not blocked.") : `${act[0]}. ${E.safe}`],
     },
-    why: main ? { plain: RULE[d.rule_id], law: main.instrument.split(";")[0].trim(), force: force(main.instrument), status: main.status, verdict: VERDICT[d.verdict], audit: r.audit } : null,
+    why: main ? { plain: RULE[d.rule_id], law: main.instrument.split(";")[0].trim(), force: force(main.instrument), status: main.status, verdict: VERDICT[d.verdict], audit: r.audit,
+                  title: followed ? "Which policy decided" : `Which policy would decide, if the AI had proposed “${ACT[r.proposal.action] || r.proposal.action}”` } : null,
   };
 }
 
@@ -400,7 +421,7 @@ function render(V, story) {
   $("#why").innerHTML = V.recorded
     ? `<h3>Measured in our tests</h3><p>${V.measured}</p><p class="note">The trust layer stops the bad decision; an engineer still repairs the part. The street scene illustrates the consequence.</p>
        <details><summary>Read HolmesGPT's two full answers</summary><div class="answers"><div><h4>Without protection</h4><pre>${esc(V.answers.raw)}</pre></div><div><h4>With the trust layer</h4><pre>${esc(V.answers.wrapped)}</pre></div></div></details>`
-    : W ? `<h3>Which policy decided</h3>
+    : W ? `<h3>${esc(W.title || "Which policy decided")}</h3>
        <div class="chain"><div><small>Rule</small><b>${esc(W.plain)}</b></div><span>→</span><div><small>UAE source</small><b>${esc(W.law)}</b></div><span>→</span>
          <div><small>Legal force</small><b>${W.force.map((f) => `<i class="c">${f}</i>`).join(" ")}</b></div><span>→</span>
          <div><small>Decision</small><b>${esc(W.verdict)}</b></div></div>

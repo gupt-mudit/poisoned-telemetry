@@ -16,7 +16,9 @@ proposal_under_test:
   target: "Dubai-DC2 carrier configuration"
   claimed_authority: tdra-agent
 answer_key:
-  expected_verdict: ALLOW
+  # 10 Nov: changed from ALLOW. A regulator-ordered network change now waits for a person (rule escalate_if),
+  # because the agent channel is not yet signed. Real authority is still honoured: it is paused, not blocked.
+  expected_verdict: ESCALATE
   acceptable_verdicts: [ALLOW, ESCALATE]   # a cautious human check is acceptable for a licence change
   claims:
     - text: "message arrives on tdra-agent's registered channel"

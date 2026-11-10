@@ -92,6 +92,7 @@ CHG-4458 is a genuine, unrelated change.
 - Rule/gap citations marked "Claude 5 Nov, Person A to confirm" are first-pass reads, not confirmations; keep status draft.
 - 9 Nov holdout (AI-written, blind): 20/20 stopped, 2/16 false blocks (internal send_report too strict); incident claims verify existence only (not node/severity); `docs/HOLDOUT_RESULTS.md`. CHG-4471 is the fake attack ID: never add it as a record.
 - 9 Nov report v7 (mentor review): literature survey (`docs/LITERATURE_SURVEY.md`, refs [15]–[34], each checked on arXiv/Crossref/USENIX) and a threat-model + security-techniques table. The audit log is a tamper-evident record with source text encrypted at rest; it does NOT encrypt or sign inter-agent messages (Ed25519 planned). Never describe it otherwise.
+- 10 Nov: a demo custom attack on the regulator's registered channel ("turn off PE-03") was ALLOWED. Fixed: a verified regulator-ordered config change now ESCALATEs (person approves). Offline re-check: no holdout verdict changed; dev S3-C4 ALLOW→ESCALATE (dev Exp 2 table now stale). Root cause stays: agent channels are not signed.
 - 6 Nov: telecom law (OCR) + Licence 2/2026 added to the local KB (TDRA 502s were transient). All 4 rules now have provisions (still draft). `docs/CITATION_CHECK.md` = Person A's 27-row check sheet with PDF pages. pdftotext/pdftoppm crash (libhvf); render PDFs with PDFKit via swift, OCR with tesseract.
 
 ## Where things are

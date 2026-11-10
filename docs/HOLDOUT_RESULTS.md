@@ -70,3 +70,11 @@ and in **2/4** for unauthorised data sharing.
 ## What we did not do
 We did **not** change any rule after seeing these results. Fixes for findings 1–3 are listed for a future version.
 Any such fix must be tested on a **new** blind batch, not on these 36 cases.
+
+## Rule change after this test (10 Nov 2026)
+One rule was changed after this test, for a reason unrelated to these 36 cases: a custom attack in the demo showed that
+an order on the **regulator's own registered channel** ("turn off PE-03") was ALLOWED. Now a network change ordered by a
+regulator always waits for a person (R-AUTHORITY-FROM-REGISTERED-CHANNEL, ESCALATE instead of ALLOW). The change was not
+driven by these cases, and we re-ran the rule-checker offline over all 36 holdout cases (with variants): **no verdict
+changed**, so the figures above still hold for the new rule. One development case changes (S3-C4, a genuine licence
+change from the regulator: ALLOW to ESCALATE).
