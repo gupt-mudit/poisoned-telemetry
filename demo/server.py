@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from demo import engine
 
 STATIC = Path(__file__).resolve().parent / "static"
+WEB = Path(__file__).resolve().parent / "web"   # the demo page (main page)
 app = FastAPI(title="Poisoned Telemetry demo", docs_url=None, redoc_url=None)
 
 
@@ -25,7 +26,7 @@ app = FastAPI(title="Poisoned Telemetry demo", docs_url=None, redoc_url=None)
 async def revalidate_ui(request, call_next):
     """Make the browser re-check the page and its static files, so an updated UI never shows from a stale cache."""
     resp = await call_next(request)
-    if request.url.path == "/" or request.url.path.startswith("/static/"):
+    if request.url.path in ("/", "/classic") or request.url.path.startswith(("/static/", "/web/")):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
@@ -46,6 +47,13 @@ class SimRequest(BaseModel):
 
 @app.get("/")
 def index():
+    """The demo: one page, two rows (without / with the trust layer)."""
+    return FileResponse(WEB / "index.html")
+
+
+@app.get("/classic")
+def classic():
+    """The earlier multi-screen UI (report tabs, regulator view, policy gaps, proof)."""
     return FileResponse(STATIC / "index.html")
 
 
@@ -129,6 +137,7 @@ def tamper(log: str):
 
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.mount("/web", StaticFiles(directory=WEB), name="web")
 
 
 def main():

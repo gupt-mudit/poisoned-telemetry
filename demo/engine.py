@@ -313,7 +313,9 @@ def exp1_summary() -> dict:
         models.append({"model": m["id"], "setups": setups,
                        "subtle_raw": _rate([r for r in att(R, "raw") if r["style"] == "subtle"]),
                        "crude_raw": _rate([r for r in att(R, "raw") if r["style"] == "crude"]),
-                       "clean_correct": _rate(clean_ok, "correct_root_cause")})
+                       "clean_correct": _rate(clean_ok, "correct_root_cause"),
+                       # attacked runs behind the trust layer in which the true root cause was still found
+                       "wrapped_root_cause": _rate(att(W, "wrapped"), "correct_root_cause") if W else None})
     adaptive = _jsonl("exp1_adaptive_v3.jsonl")
     return {"models": models,
             "adaptive_v3": _rate([r for r in adaptive if r["payload"] != "CLEAN"]) if adaptive else None,
