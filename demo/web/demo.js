@@ -193,7 +193,7 @@ function scenePeople(who) {
 
 function worldHTML(scene, who) {
   return `<div class="w-head"><b>The real world</b><span>illustration</span></div>
-    <div class="w-pic s-${scene}">${scene === "people" ? scenePeople(who) : sceneArea(who)}</div>
+    <div class="w-pic s-${scene}">${scene === "people" ? scenePeople(who) : sceneArea(who)}<span class="w-stamp">Not fooled this time · nothing checked it</span></div>
     <div class="status"><div class="st" data-k="sec"><span>Security</span><b>Waiting…</b></div><div class="st" data-k="ppl"><span>For people</span><b></b></div></div>`;
 }
 
@@ -244,6 +244,8 @@ function fromSim(r, story) {
   const E = mal ? EFFECT[fx] : EFFECT.none;
   const live = r.live, aProp = live ? live.raw : r.proposal, bProp = live ? live.protected : r.proposal;
   const fooled = mal && !(live && !live.raw_did_attacker_goal);
+  const lucky = mal && !fooled;   /* live AI on its own did not obey this time: its own judgement, not a check */
+  const rawRate = (S.overview?.exp1?.models || []).find((m) => m.model === "gpt-4.1")?.setups.find((x) => x.setup === "raw");
   const n = (v) => d.claims.filter((c) => c.verification === v).length;
   const chips = [n("contradicted") && `<i class="c bad">${n("contradicted")} false</i>`, n("unverified") && `<i class="c warn">${n("unverified")} can't confirm</i>`,
     n("verified") && `<i class="c ok">${n("verified")} true</i>`].filter(Boolean).join("") || '<i class="c">nothing to check</i>';
@@ -282,20 +284,25 @@ function fromSim(r, story) {
     A: {
       steps: [msgStep,
         { kind: "k-ai", title: "AI agent", result: "reads every word", sub: mal ? "planted part included" : "and believes it", detail: `<p>It reads the whole message, including any part an outsider planted, and cannot check any of it.</p>${quoted}` },
-        { kind: fooled ? "k-bad" : "k-ok", title: "Action", result: `Done: ${esc(ACT[aProp.action] || aProp.action)}`, sub: fooled ? "nobody checked" : mal ? "this time the live AI did not follow it" : "normal work goes ahead",
+        { kind: fooled ? "k-bad" : lucky ? "k-warn" : "k-ok", title: "Action", result: `Done: ${esc(ACT[aProp.action] || aProp.action)}`, sub: fooled ? "nobody checked" : lucky ? "the AI's own choice this time · nobody checked" : "normal work goes ahead",
           detail: fooled ? `<p>${esc(E.bad)}</p><p class="note">Offline, we assume the agent was fooled, as unprotected agents were in our recorded tests; then we test whether the trust layer still stops it.</p>` : `<p>The action went ahead: ${esc(ACT[aProp.action] || aProp.action)}.</p>` }],
       mind: {
         instructions, dataTitle: "The data it reads: the whole message (real input)", data: rawData,
-        pin: mal ? "↑ This sentence came from an outsider, but to the AI it reads like an order." : "",
-        think: mal ? "To the AI, its operator's instructions and the outsider's sentence are the same thing: words in one input. Nothing tells it who is allowed to give orders, so it can treat the planted sentence as part of its job."
+        pin: lucky ? "↑ This sentence came from an outsider. This time the AI did not obey it, but nothing stopped it from doing so."
+          : mal ? "↑ This sentence came from an outsider, but to the AI it reads like an order." : "",
+        think: lucky ? `This time the live AI judged the request suspicious and chose to investigate. That is the model's own judgement on this run, not a check: nothing outside the AI would have stopped it.${rawRate ? ` In our recorded tests the same model (gpt-4.1) followed planted text in ${rawRate.k} of ${rawRate.n} attacks, more often when the text was subtle.` : ""}`
+          : mal ? "To the AI, its operator's instructions and the outsider's sentence are the same thing: words in one input. Nothing tells it who is allowed to give orders, so it can treat the planted sentence as part of its job."
                    : "A normal message. The AI reads it and proposes the expected work.",
         outTitle: live ? "Its real proposal (live AI)" : "Its proposal", outCls: fooled ? "bad" : "ok",
         out: `<b>${esc(ACT[aProp.action] || aProp.action)}</b>${live && aProp.rationale ? `<br><small>“${esc(aProp.rationale)}”</small>` : ""}${!live && mal ? "<br><small>Offline we show the worst case: in our recorded tests, unprotected AI agents followed planted text in 19–42% of attacks.</small>" : ""}`,
       },
-      start: E.start, end: fooled ? ["bad", "No check: the action went ahead.", "bad", E.bad] : ["neutral", "No check was made.", "good", mal ? "This time the AI was not fooled; nothing would have stopped it." : E.safe],
-      endFx: fooled ? `bad-${fx}` : "ok",
+      start: E.start,
+      end: fooled ? ["bad", "No check: the action went ahead.", "bad", E.bad]
+        : lucky ? ["warn", "Not fooled this time, but nothing checked it.", "warn", "Nothing happened this time: the AI chose to investigate. Without a check, people are safe only if the AI notices every time."]
+        : ["neutral", "No check was made.", "good", E.safe],
+      endFx: fooled ? `bad-${fx}` : lucky ? "lucky" : "ok",
       lines: [`A message arrives: ${CHANNEL[it.channel] || it.channel}.`, mal ? "The AI reads every word, including the part an outsider planted. Look inside: to the AI it all reads like instructions." : "The AI on its own reads the message.",
-        fooled ? `${E.bad}` : "Nothing harmful happens this time."],
+        fooled ? `${E.bad}` : lucky ? "This time the AI did not obey, by its own judgement. Nothing checked it: next time it may." : "Nothing harmful happens this time."],
     },
     B: {
       steps: [msgStep,
